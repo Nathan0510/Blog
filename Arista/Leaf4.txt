@@ -1,37 +1,79 @@
+! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf4-B2
+!
+spanning-tree mode mstp
+no spanning-tree vlan-id 1-4094
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
 vlan 4090
- name vlan-peer-link
- trunk group MLAG
+   name vlan-peer-link
+   trunk group MLAG
 !
-int vlan 4090
- ip add 10.0.1.3/31
- no autostate
- no shut
+vrf instance mgmt
 !
-int management1
- vrf mgmt
- description KEEP-ALIVE MLAG
- ip add 10.0.2.3/31
+interface Port-Channel100
+   description PEER-LINK LEAF3 - po100
+   switchport mode trunk
+   switchport trunk group MLAG
 !
-int et10
- description PEER-LINK LEAF4 - et10
- channel-group 100 mode active
+interface Ethernet1
 !
-int et11
- description PEER-LINK LEAF3 - et11
- channel-group 100 mode active
+interface Ethernet2
 !
-int po100
- description PEER-LINK LEAF3 - po100
- switchport mode trunk
- switchport trunk group MLAG
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+   description PEER-LINK LEAF4 - et10
+   channel-group 100 mode active
+!
+interface Ethernet11
+   description PEER-LINK LEAF3 - et11
+   channel-group 100 mode active
+!
+interface Management1
+   description KEEP-ALIVE MLAG
+   vrf mgmt
+   ip address 10.0.2.3/31
+!
+interface Vlan4090
+   no autostate
+   ip address 10.0.1.3/31
+!
+ip routing
+ip routing vrf mgmt
+!
+ipv6 unicast-routing
 !
 mlag configuration
- domain-id MLAG-Leaf
- peer-link po100
- local-interface vlan 4090
- peer-address 10.0.1.2
- no shut
- peer-address heartbeat 10.0.2.2 vrf mgmt
- dual-primary detection delay 10 action errdisable all-interfaces
+   domain-id MLAG-Leaf
+   local-interface Vlan4090
+   peer-address 10.0.1.2
+   peer-address heartbeat 10.0.2.2 vrf mgmt
+   peer-link Port-Channel100
+   dual-primary detection delay 10 action errdisable all-interfaces
 !
-errdisable recovery cause mlagdualprimary
+end

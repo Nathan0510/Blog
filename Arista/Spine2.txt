@@ -1,0 +1,75 @@
+! device: Spine2-B2 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Spine2-B2
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   no switchport
+   ipv6 enable
+!
+interface Ethernet2
+   no switchport
+   ipv6 enable
+!
+interface Ethernet3
+   no switchport
+   ipv6 enable
+!
+interface Ethernet4
+   no switchport
+   ipv6 enable
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+!
+interface Loopback1
+   description EVPN | Control plane
+   ipv6 address 2001:172:16:1::20/128
+!
+interface Management1
+!
+ip routing
+!
+ipv6 prefix-list PL_UNDERLAY_LO
+   seq 10 permit 2001:172:16:1::20/128
+!
+ipv6 unicast-routing
+!
+route-map RM_UNDERLAY_LO permit 10
+   match ipv6 address prefix-list PL_UNDERLAY_LO
+!
+router bgp 65000
+   router-id 172.16.1.20
+   bgp default ipv6-unicast
+   distance bgp 20 200 200
+   maximum-paths 8 ecmp 16
+   bgp listen range fe80::/10 peer-group GROUP_UNDERLAY peer-filter PF_UNDERLAY_AS
+   neighbor GROUP_UNDERLAY peer group
+   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
+   redistribute connected route-map RM_UNDERLAY_LO
+!
+end

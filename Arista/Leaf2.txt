@@ -1,3 +1,5 @@
+! boot system flash:/vEOS-lab.swi
+!
 no aaa root
 !
 transceiver qsfp default-mode 4x10G
@@ -27,8 +29,12 @@ interface Port-Channel100
 interface Ethernet1
 !
 interface Ethernet2
+   no switchport
+   ipv6 enable
 !
 interface Ethernet3
+   no switchport
+   ipv6 enable
 !
 interface Ethernet4
 !
@@ -50,6 +56,14 @@ interface Ethernet11
    description PEER-LINK LEAF1 - et11
    channel-group 100 mode active
 !
+interface Loopback1
+   description EVPN | Control Plane
+   ipv6 address 2001:172:16:1::2/128
+!
+interface Loopback2
+   description VxLAN | Data Plane
+   ipv6 address 2001:172:16:2::2/128
+!
 interface Management1
    description KEEP-ALIVE MLAG
    vrf mgmt
@@ -62,6 +76,10 @@ interface Vlan4090
 ip routing
 ip routing vrf mgmt
 !
+ipv6 prefix-list PL_UNDERLAY_LO
+   seq 10 permit 2001:172:16:1::2/128
+   seq 20 permit 2001:172:16:2::2/128
+!
 ipv6 unicast-routing
 !
 mlag configuration
@@ -71,5 +89,19 @@ mlag configuration
    peer-address heartbeat 10.0.2.0 vrf mgmt
    peer-link Port-Channel100
    dual-primary detection delay 10 action errdisable all-interfaces
+!
+route-map RM_UNDERLAY_LO permit 10
+   match ipv6 address prefix-list PL_UNDERLAY_LO
+!
+router bgp 65001
+   router-id 172.16.1.2
+   bgp default ipv6-unicast
+   distance bgp 20 200 200
+   maximum-paths 8 ecmp 16
+   neighbor GROUP_UNDERLAY peer group
+   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
+   neighbor GROUP_UNDERLAY send-community extended
+   redistribute connected route-map RM_UNDERLAY_LO
+   neighbor interface Et2-3 peer-group GROUP_UNDERLAY remote-as 65000
 !
 end

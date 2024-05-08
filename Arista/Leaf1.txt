@@ -109,7 +109,7 @@ router bgp 65001
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
    neighbor GROUP_UNDERLAY peer group
-   neighbor GROUP_UNDERLAY send-community extended
+   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
    neighbor 2001:172:16:3::1 remote-as 65001
    neighbor 2001:172:16:3::1 next-hop-self
    neighbor 2001:172:16:3::1 description PEER-MLAG-IBGP

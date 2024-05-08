@@ -109,7 +109,6 @@ router bgp 65002
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
    neighbor GROUP_UNDERLAY peer group
-   neighbor GROUP_UNDERLAY send-community extended
    neighbor 2001:172:16:3::2 remote-as 65002
    neighbor 2001:172:16:3::2 next-hop-self
    neighbor 2001:172:16:3::2 description PEER-MLAG-IBGP

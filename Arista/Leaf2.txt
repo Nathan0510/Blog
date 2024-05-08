@@ -104,7 +104,6 @@ router bgp 65001
    maximum-paths 8 ecmp 16
    neighbor GROUP_UNDERLAY peer group
    neighbor GROUP_UNDERLAY rib-in pre-policy retain all
-   neighbor GROUP_UNDERLAY send-community extended
    redistribute connected route-map RM_UNDERLAY_LO
    neighbor interface Et2-3 peer-group GROUP_UNDERLAY remote-as 65000
 !

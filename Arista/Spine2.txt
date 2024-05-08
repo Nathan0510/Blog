@@ -65,11 +65,12 @@ route-map RM_UNDERLAY_LO permit 10
 router bgp 65000
    router-id 172.16.1.20
    bgp default ipv6-unicast
+   timers bgp 10 30
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
    bgp listen range fe80::/10 peer-group GROUP_UNDERLAY peer-filter PF_UNDERLAY_AS
    neighbor GROUP_UNDERLAY peer group
-   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
+   neighbor GROUP_UNDERLAY send-community extended
    redistribute connected route-map RM_UNDERLAY_LO
 !
 end

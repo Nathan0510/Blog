@@ -68,7 +68,7 @@ peer-filter PF_FABRIC_AS
 router bgp 65000
    router-id 172.16.1.10
    bgp default ipv6-unicast
-   timers bgp 10 30
+   timers bgp 30 60
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
    bgp listen range fe80::/10 peer-group GROUP_UNDERLAY peer-filter PF_FABRIC_AS

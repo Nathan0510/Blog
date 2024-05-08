@@ -73,6 +73,9 @@ interface Vlan4090
    no autostate
    ip address 10.0.1.1/31
 !
+interface Vlan4091
+   ipv6 address 2001:172:16:3::1/127
+!
 ip routing
 ip routing vrf mgmt
 !

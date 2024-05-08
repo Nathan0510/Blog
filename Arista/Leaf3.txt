@@ -80,7 +80,6 @@ interface Vlan4090
    ip address 10.0.1.2/31
 !
 interface Vlan4091
-   ipv6 address 2001:172:16:3::1/127
    ipv6 address 2001:172:16:3::2/127
 !
 ip routing

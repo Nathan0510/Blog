@@ -17,6 +17,9 @@ system l1
    unsupported speed action error
    unsupported error-correction action error
 !
+vlan 1000
+   name TERMINAL
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -51,6 +54,8 @@ interface Ethernet6
 interface Ethernet7
 !
 interface Ethernet8
+   description TERMINAL
+   switchport access vlan 1000
 !
 interface Ethernet9
 !
@@ -82,6 +87,12 @@ interface Vlan4090
 interface Vlan4091
    ipv6 address 2001:172:16:3::2/127
 !
+interface Vxlan1
+   vxlan source-interface Loopback2
+   vxlan udp-port 4789
+   vxlan encapsulation ipv6
+   vxlan vlan 1000 vni 101000
+!
 ip routing
 ip routing vrf mgmt
 !
@@ -108,11 +119,29 @@ router bgp 65002
    timers bgp 30 60
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
+   neighbor GROUP_OVERLAY peer group
+   neighbor GROUP_OVERLAY remote-as 65000
+   neighbor GROUP_OVERLAY update-source Loopback1
+   neighbor GROUP_OVERLAY ebgp-multihop 2
+   neighbor GROUP_OVERLAY send-community extended
    neighbor GROUP_UNDERLAY peer group
+   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
+   neighbor 2001:172:16:1::10 peer group GROUP_OVERLAY
+   neighbor 2001:172:16:1::10 description Spine1
+   neighbor 2001:172:16:1::20 peer group GROUP_OVERLAY
+   neighbor 2001:172:16:1::20 description Spine2
    neighbor 2001:172:16:3::3 remote-as 65002
    neighbor 2001:172:16:3::3 next-hop-self
    neighbor 2001:172:16:3::3 description PEER-MLAG-IBGP
    redistribute connected route-map RM_UNDERLAY_LO
    neighbor interface Et2-3 peer-group GROUP_UNDERLAY remote-as 65000
+   !
+  vlan 1000
+    rd 65001:101000
+    route-target both 1000:101000
+    redistribute learned
+   !
+   address-family evpn
+      neighbor GROUP_OVERLAY activate
 !
 end

@@ -56,7 +56,6 @@ interface Ethernet7
 interface Ethernet8
    description TERMINAL
    switchport access vlan 1000
-
 !
 interface Ethernet9
 !

@@ -67,13 +67,21 @@ peer-filter PF_FABRIC_AS
 !
 router bgp 65000
    router-id 172.16.1.10
-   timers bgp 30 60
    bgp default ipv6-unicast
+   timers bgp 30 60
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
+   bgp listen range 2001:172:16:1::/64 peer-group GROUP_OVERLAY peer-filter PF_FABRIC_AS
    bgp listen range fe80::/10 peer-group GROUP_UNDERLAY peer-filter PF_FABRIC_AS
+   neighbor GROUP_OVERLAY peer group
+   neighbor GROUP_OVERLAY update-source Loopback1
+   neighbor GROUP_OVERLAY ebgp-multihop 2
+   neighbor GROUP_OVERLAY send-community extended
    neighbor GROUP_UNDERLAY peer group
    neighbor GROUP_UNDERLAY rib-in pre-policy retain all
    redistribute connected route-map RM_UNDERLAY_LO
+   !
+   address-family evpn
+      neighbor GROUP_OVERLAY activate
 !
 end

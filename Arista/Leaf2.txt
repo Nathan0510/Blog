@@ -85,7 +85,8 @@ interface Vlan4091
 interface Vxlan1
    vxlan source-interface Loopback2
    vxlan udp-port 4789
-   vxlan encapsulation ipv6!
+   vxlan encapsulation ipv6
+!
 ip routing
 ip routing vrf mgmt
 !

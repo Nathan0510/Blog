@@ -1,4 +1,4 @@
-! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
+! device: Leaf3-B2 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -8,7 +8,7 @@ transceiver qsfp default-mode 4x10G
 !
 service routing protocols model multi-agent
 !
-hostname Leaf4-B2
+hostname Leaf3-B2
 !
 spanning-tree mode mstp
 no spanning-tree vlan-id 1-4094
@@ -16,6 +16,9 @@ no spanning-tree vlan-id 1-4094
 system l1
    unsupported speed action error
    unsupported error-correction action error
+!
+vlan 1000
+   name TERMINAL
 !
 vlan 4090
    name vlan-peer-link
@@ -28,21 +31,21 @@ vlan 4091
 vrf instance mgmt
 !
 interface Port-Channel100
-   description PEER-LINK LEAF3 - po100
+   description PEER-LINK LEAF4 - po100
    switchport mode trunk
    switchport trunk group MLAG
 !
 interface Ethernet1
-   no switchport
-   ipv6 enable
 !
 interface Ethernet2
-!
-interface Ethernet3
-!
-interface Ethernet4
    no switchport
    ipv6 enable
+!
+interface Ethernet3
+   no switchport
+   ipv6 enable
+!
+interface Ethernet4
 !
 interface Ethernet5
 !
@@ -51,6 +54,8 @@ interface Ethernet6
 interface Ethernet7
 !
 interface Ethernet8
+   description TERMINAL
+   switchport access vlan 1000
 !
 interface Ethernet9
 !
@@ -59,48 +64,49 @@ interface Ethernet10
    channel-group 100 mode active
 !
 interface Ethernet11
-   description PEER-LINK LEAF3 - et11
+   description PEER-LINK LEAF4 - et11
    channel-group 100 mode active
 !
 interface Loopback1
    description EVPN | Control Plane
-   ipv6 address 2001:172:16:1::4/128
+   ipv6 address 2001:172:16:1::3/128
 !
 interface Loopback2
    description VxLAN | Data Plane
-   ipv6 address 2001:172:16:2::4/128
+   ipv6 address 2001:172:16:2::3/128
 !
 interface Management1
    description KEEP-ALIVE MLAG
    vrf mgmt
-   ip address 10.0.2.3/31
+   ip address 10.0.2.2/31
 !
 interface Vlan4090
    no autostate
-   ip address 10.0.1.3/31
+   ip address 10.0.1.2/31
 !
 interface Vlan4091
-   ipv6 address 2001:172:16:3::3/127
+   ipv6 address 2001:172:16:3::2/127
 !
 interface Vxlan1
    vxlan source-interface Loopback2
    vxlan udp-port 4789
    vxlan encapsulation ipv6
+   vxlan vlan 1000 vni 101000
 !
 ip routing
 ip routing vrf mgmt
 !
 ipv6 prefix-list PL_UNDERLAY_LO
-   seq 10 permit 2001:172:16:1::4/128
-   seq 20 permit 2001:172:16:2::4/128
+   seq 10 permit 2001:172:16:1::3/128
+   seq 20 permit 2001:172:16:2::3/128
 !
 ipv6 unicast-routing
 !
 mlag configuration
    domain-id MLAG-Leaf
    local-interface Vlan4090
-   peer-address 10.0.1.2
-   peer-address heartbeat 10.0.2.2 vrf mgmt
+   peer-address 10.0.1.3
+   peer-address heartbeat 10.0.2.3 vrf mgmt
    peer-link Port-Channel100
    dual-primary detection delay 10 action errdisable all-interfaces
 !
@@ -108,7 +114,7 @@ route-map RM_UNDERLAY_LO permit 10
    match ipv6 address prefix-list PL_UNDERLAY_LO
 !
 router bgp 65002
-   router-id 172.16.1.4
+   router-id 172.16.1.3
    bgp default ipv6-unicast
    timers bgp 30 60
    distance bgp 20 200 200
@@ -124,11 +130,16 @@ router bgp 65002
    neighbor 2001:172:16:1::10 description Spine1
    neighbor 2001:172:16:1::20 peer group GROUP_OVERLAY
    neighbor 2001:172:16:1::20 description Spine2
-   neighbor 2001:172:16:3::2 remote-as 65002
-   neighbor 2001:172:16:3::2 next-hop-self
-   neighbor 2001:172:16:3::2 description PEER-MLAG-IBGP
+   neighbor 2001:172:16:3::3 remote-as 65002
+   neighbor 2001:172:16:3::3 next-hop-self
+   neighbor 2001:172:16:3::3 description PEER-MLAG-IBGP
    redistribute connected route-map RM_UNDERLAY_LO
-   neighbor interface Et1,4 peer-group GROUP_UNDERLAY remote-as 65000
+   neighbor interface Et2-3 peer-group GROUP_UNDERLAY remote-as 65000
+   !
+  vlan 1000
+    rd 65001:101000
+    route-target both 1000:101000
+    redistribute learned
    !
    address-family evpn
       neighbor GROUP_OVERLAY activate

@@ -82,6 +82,11 @@ interface Vlan4090
 interface Vlan4091
    ipv6 address 2001:172:16:3::3/127
 !
+interface Vxlan1
+   vxlan source-interface Loopback2
+   vxlan udp-port 4789
+   vxlan encapsulation ipv6
+!
 ip routing
 ip routing vrf mgmt
 !
@@ -108,11 +113,24 @@ router bgp 65002
    timers bgp 30 60
    distance bgp 20 200 200
    maximum-paths 8 ecmp 16
+   neighbor GROUP_OVERLAY peer group
+   neighbor GROUP_OVERLAY remote-as 65000
+   neighbor GROUP_OVERLAY update-source Loopback1
+   neighbor GROUP_OVERLAY ebgp-multihop 2
+   neighbor GROUP_OVERLAY send-community extended
    neighbor GROUP_UNDERLAY peer group
+   neighbor GROUP_UNDERLAY rib-in pre-policy retain all
+   neighbor 2001:172:16:1::10 peer group GROUP_OVERLAY
+   neighbor 2001:172:16:1::10 description Spine1
+   neighbor 2001:172:16:1::20 peer group GROUP_OVERLAY
+   neighbor 2001:172:16:1::20 description Spine2
    neighbor 2001:172:16:3::2 remote-as 65002
    neighbor 2001:172:16:3::2 next-hop-self
    neighbor 2001:172:16:3::2 description PEER-MLAG-IBGP
    redistribute connected route-map RM_UNDERLAY_LO
    neighbor interface Et1,4 peer-group GROUP_UNDERLAY remote-as 65000
+   !
+   address-family evpn
+      neighbor GROUP_OVERLAY activate
 !
 end

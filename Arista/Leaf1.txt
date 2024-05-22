@@ -36,6 +36,7 @@ interface Port-Channel100
    switchport trunk group MLAG
 !
 interface Ethernet1
+   mtu 9214
    no switchport
    ipv6 enable
 !
@@ -44,6 +45,7 @@ interface Ethernet2
 interface Ethernet3
 !
 interface Ethernet4
+   mtu 9214
    no switchport
    ipv6 enable
 !
@@ -85,6 +87,7 @@ interface Vlan4090
    ip address 10.0.1.0/31
 !
 interface Vlan4091
+   mtu 9214
    ipv6 address 2001:172:16:3::/127
 !
 interface Vxlan1

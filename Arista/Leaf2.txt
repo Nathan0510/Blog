@@ -35,10 +35,12 @@ interface Port-Channel100
 interface Ethernet1
 !
 interface Ethernet2
+   mtu 9214
    no switchport
    ipv6 enable
 !
 interface Ethernet3
+   mtu 9214
    no switchport
    ipv6 enable
 !
@@ -80,6 +82,7 @@ interface Vlan4090
    ip address 10.0.1.1/31
 !
 interface Vlan4091
+   mtu 9214
    ipv6 address 2001:172:16:3::1/127
 !
 interface Vxlan1

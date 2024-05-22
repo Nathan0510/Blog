@@ -38,10 +38,12 @@ interface Port-Channel100
 interface Ethernet1
 !
 interface Ethernet2
+   mtu 9214
    no switchport
    ipv6 enable
 !
 interface Ethernet3
+   mtu 9214
    no switchport
    ipv6 enable
 !

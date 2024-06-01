@@ -17,6 +17,9 @@ system l1
    unsupported speed action error
    unsupported error-correction action error
 !
+vlan 10
+   name INTERCO-LNS1-LNS2
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -26,6 +29,17 @@ vlan 4091
    trunk group MLAG
 !
 vrf instance mgmt
+!
+!
+management http-server
+   protocol https port 4443
+!
+interface Port-Channel10
+   description PO_OUT_LNS1
+   mtu 9214
+   switchport trunk allowed vlan 10-11,500
+   switchport mode trunk
+   mlag 10
 !
 interface Port-Channel100
    description PEER-LINK LEAF2 - po100
@@ -38,6 +52,10 @@ interface Ethernet1
    ipv6 enable
 !
 interface Ethernet2
+   description COLLECTE_COVAGE_L2
+   switchport access vlan 500
+   switchport mode dot1q-tunnel
+   spanning-tree bpdufilter enable
 !
 interface Ethernet3
 !
@@ -49,14 +67,20 @@ interface Ethernet4
 interface Ethernet5
 !
 interface Ethernet6
+   description OUT_LNS1
+   mtu 9214
+   switchport trunk allowed vlan 10
+   switchport mode trunk
+   channel-group 10 mode active
 !
 interface Ethernet7
 !
 interface Ethernet8
-   description TERMINAL
-   switchport access vlan 1000
 !
 interface Ethernet9
+   no switchport
+   vrf test
+   ip address 192.168.14.1/24
 !
 interface Ethernet10
    description PEER-LINK LEAF2 - et10
@@ -95,6 +119,7 @@ interface Vxlan1
 !
 ip routing
 ip routing vrf mgmt
+no ip routing vrf test
 !
 ipv6 prefix-list PL_UNDERLAY_LO
    seq 10 permit 2001:172:16:1::1/128
@@ -140,7 +165,7 @@ router bgp 65001
       rd 65001:100010
       route-target both 10:100010
       redistribute learned
-   !
+   !   !
    address-family evpn
       neighbor GROUP_OVERLAY activate
 !

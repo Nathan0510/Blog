@@ -177,7 +177,7 @@ interface GigabitEthernet9
  no mop enabled
  no mop sysid
  channel-group 10 mode active
-!!
+!
 router isis
  net 49.0001.1001.2700.0000.00
  is-type level-2-only

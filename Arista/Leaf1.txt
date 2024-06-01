@@ -52,10 +52,6 @@ interface Ethernet1
    ipv6 enable
 !
 interface Ethernet2
-   description COLLECTE_COVAGE_L2
-   switchport access vlan 500
-   switchport mode dot1q-tunnel
-   spanning-tree bpdufilter enable
 !
 interface Ethernet3
 !

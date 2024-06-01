@@ -1,0 +1,565 @@
+version 16.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname LNS1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition VRF2
+ rd 100:2
+ route-target export 100:2
+ route-target import 100:2
+ !
+ --More--
+*Jun  1 21:00:42.062: BFD feature not suppote address-family ipv6
+ exit-address-family
+!
+!
+aaa new-model
+!
+!
+!
+!
+!
+!
+!
+aaa session-id common
+port-channel mc-lag
+!
+ip vrf VRF1
+ rd 100:1
+ route-target export 100:1
+ route-target import 100:1
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+!
+!
+!
+!
+!
+ipv6 unicast-routing
+ipv6 dhcp pool CPE_LAN_DP
+ prefix-delegation 2001:DB8:5AB:2000::/56 00030001CA00075C0008 lifetime infinite infinite
+!
+mpls label protocol ldp
+mpls ldp explicit-null
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 9ICV79PF1PK
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+username nathan password 0 nathan
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+bba-group pppoe global
+ virtual-template 1
+!
+!
+!
+interface Loopback1
+ description LO_MPLS
+ ip address 100.127.0.1 255.255.255.255
+ ip router isis
+ ipv6 address 2001:DEAD:C0CA:C01A::1/128
+ ipv6 router isis
+!
+interface Loopback2
+ ip address 109.205.64.1 255.255.255.255
+!
+interface Loopback55
+ ip address 109.205.66.127 255.255.255.255
+!
+interface Port-channel10
+ description PO_OUT_LEAF_B1
+ mtu 2000
+ no ip address
+ no negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface Port-channel10.10
+ description L2-LNS-ISIS
+ encapsulation dot1Q 10
+ ip address 100.64.0.1 255.255.255.248
+ ip router isis
+ ipv6 address 2001:DEAD:CAFE:BABE::1/125
+ ipv6 enable
+ ipv6 router isis
+ mpls ip
+!
+interface Port-channel10.11
+ description L2-LNS-BR-LNS
+ encapsulation dot1Q 11
+ ip address 100.65.0.1 255.255.255.248
+ ipv6 address 2001:DEAD:CAFE:BEEF::1/125
+ ipv6 enable
+!
+interface GigabitEthernet1
+ mtu 9214
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet1.500
+ encapsulation dot1Q 500 second-dot1q any
+ pppoe enable group global
+!
+interface GigabitEthernet2
+ description COLLECTE_COVAGE_L2
+ mtu 9214
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2.500
+ encapsulation dot1Q 500 second-dot1q any
+!
+interface GigabitEthernet3
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ description OUT_LEAF1
+ mtu 2000
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+ channel-group 10 mode active
+!
+interface GigabitEthernet9
+ description OUT_LEAF2
+ mtu 2000
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+ channel-group 10 mode active
+!
+interface Virtual-Template1
+ mtu 1492
+ ip unnumbered Loopback2
+ peer default ip address pool TEST
+ peer default ipv6 pool PPPOE_V6
+ ipv6 enable
+ ipv6 nd ra lifetime 21600
+ ipv6 nd ra interval 4 3
+ ipv6 dhcp server CPE_LAN_DP
+ ppp authentication chap
+!
+router ospf 1
+!
+router isis
+ net 49.0001.1001.2700.0000.00
+ is-type level-2-only
+ metric-style narrow
+ log-adjacency-changes
+ mpls ldp autoconfig
+!
+router bgp 64555
+ bgp log-neighbor-changes
+ timers bgp 30 60
+ neighbor LNS_V4 peer-group
+ neighbor LNS_V4 remote-as 64555
+ neighbor LNS_V4 update-source Loopback1
+ neighbor LNS_V6 peer-group
+ neighbor LNS_V6 remote-as 64555
+ neighbor LNS_V6 update-source Loopback1
+ neighbor 2001:DEAD:C0CA:C01A::2 peer-group LNS_V6
+ neighbor 2001:DEAD:CAFE:BEEF::6 remote-as 57752
+ neighbor 100.65.0.6 remote-as 57752
+ neighbor 100.127.0.2 peer-group LNS_V4
+ !
+ address-family ipv4
+  bgp suppress-inactive
+  redistribute connected
+  neighbor LNS_V4 next-hop-self
+  no neighbor 2001:DEAD:C0CA:C01A::2 activate
+  no neighbor 2001:DEAD:CAFE:BEEF::6 activate
+  neighbor 100.65.0.6 activate
+  neighbor 100.127.0.2 activate
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor LNS_V4 send-community both
+  neighbor 100.127.0.2 activate
+ exit-address-family
+ !
+ address-family ipv6
+  redistribute connected
+  neighbor 2001:DEAD:C0CA:C01A::2 activate
+  neighbor 2001:DEAD:C0CA:C01A::2 soft-reconfiguration inbound
+  neighbor 2001:DEAD:CAFE:BEEF::6 activate
+ exit-address-family
+ !
+ address-family vpnv6
+  neighbor LNS_V6 send-community both
+  neighbor 2001:DEAD:C0CA:C01A::2 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf VRF1
+  redistribute connected
+ exit-address-family
+ !
+ address-family ipv6 vrf VRF2
+  redistribute connected
+ exit-address-family
+!
+ip local pool TEST 109.205.64.50 109.205.64.100
+ip forward-protocol nd
+no ip http server
+no ip http secure-server
+!
+!
+ipv6 local pool PPPOE_V6 2001:ABCD::/60 64
+!
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+!
+wsma agent exec
+!
+wsma agent config
+!
+wsma agent filesys
+!
+wsma agent notify
+!
+!
+end
+
+LNS1#sh run
+Building configuration...
+
+Current configuration : 5335 bytes
+!
+! Last configuration change at 21:00:02 UTC Sat Jun 1 2024
+!
+version 16.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname LNS1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+aaa new-model
+!
+!
+!
+!
+!
+!
+!
+aaa session-id common
+port-channel mc-lag
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+!
+!
+!
+!
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 9ICV79PF1PK
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback1
+ description LO_MPLS
+ ip address 100.127.0.1 255.255.255.255
+ ip router isis
+ ipv6 address 2001:DEAD:C0CA:C01A::1/128
+ ipv6 router isis
+!
+interface Port-channel10
+ description PO_OUT_LEAF_B1
+ mtu 2000
+ no ip address
+ no negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface Port-channel10.10
+ description L2-LNS-ISIS
+ encapsulation dot1Q 10
+ ip address 100.64.0.1 255.255.255.248
+ ip router isis
+ ipv6 address 2001:DEAD:CAFE:BABE::1/125
+ ipv6 enable
+ ipv6 router isis
+!
+interface GigabitEthernet2
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!!
+interface GigabitEthernet3
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet5
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet6
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet7
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet8
+ description OUT_LEAF1
+ mtu 2000
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+ channel-group 10 mode active
+!
+interface GigabitEthernet9
+ description OUT_LEAF2
+ mtu 2000
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+ channel-group 10 mode active
+!!
+router isis
+ net 49.0001.1001.2700.0000.00
+ is-type level-2-only
+ metric-style narrow
+ log-adjacency-changes
+!
+ip forward-protocol nd
+no ip http server
+no ip http secure-server
+!
+!
+!
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+!
+wsma agent exec
+!
+wsma agent config
+!
+wsma agent filesys
+!
+wsma agent notify
+!
+!
+end

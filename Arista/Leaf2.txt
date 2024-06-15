@@ -1,4 +1,4 @@
-! device: Leaf2-B1 (vEOS-lab, EOS-4.31.0F)
+ ! device: Leaf2-B1 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -20,6 +20,9 @@ system l1
 vlan 10
    name INTERCO-LNS1-LNS2
 !
+vlan 11
+   name INTERCO-BR-LNS
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -36,6 +39,12 @@ interface Port-Channel10
    switchport trunk allowed vlan 10-11,500
    switchport mode trunk
    mlag 10
+!
+interface Port-Channel20
+   description PO_IN_LNS1
+   switchport trunk allowed vlan 500
+   switchport mode trunk
+   mlag 20
 !
 interface Port-Channel100
    description PEER-LINK LEAF1 - po100
@@ -55,6 +64,12 @@ interface Ethernet3
    ipv6 enable
 !
 interface Ethernet4
+!
+interface Ethernet5
+   description IN_LNS1
+   switchport trunk allowed vlan 500
+   switchport mode trunk
+   channel-group 20 mode active
 !
 interface Ethernet6
    description OUT_LNS1
@@ -103,6 +118,8 @@ interface Vxlan1
    vxlan udp-port 4789
    vxlan encapsulation ipv6
    vxlan vlan 10 vni 100010
+   vxlan vlan 11 vni 100011
+   vxlan vlan 100 vni 10100
 !
 ip routing
 ip routing vrf mgmt
@@ -150,6 +167,11 @@ router bgp 65001
    vlan 10
       rd 65001:100010
       route-target both 10:100010
+      redistribute learned
+   !
+   vlan 11
+      rd 65001:100011
+      route-target both 11:100011
       redistribute learned
    !
    address-family evpn

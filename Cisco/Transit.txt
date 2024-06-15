@@ -1,0 +1,173 @@
+version 16.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname Cogent
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+!
+!
+!
+!
+!
+ipv6 unicast-routing
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 9EQVDF7T9BK
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+!
+redundancy
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback1
+ ip address 1.1.1.1 255.255.255.255
+!
+interface GigabitEthernet1
+ mtu 2000
+ ip address 140.150.160.2 255.255.255.252
+ negotiation auto
+ ipv6 address 2001:ABCD:ABCD::/127
+ ipv6 enable
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router bgp 174
+ bgp log-neighbor-changes
+ neighbor 2001:ABCD:ABCD::1 remote-as 57752
+ neighbor 2001:ABCD:ABCD::1 description BR
+ neighbor 140.150.160.1 remote-as 57752
+ neighbor 140.150.160.1 description BR
+ !
+ address-family ipv4
+  no neighbor 2001:ABCD:ABCD::1 activate
+  neighbor 140.150.160.1 activate
+  neighbor 140.150.160.1 default-originate
+ exit-address-family
+ !
+ address-family ipv6
+  neighbor 2001:ABCD:ABCD::1 activate
+  neighbor 2001:ABCD:ABCD::1 default-originate
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+!
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ login
+!
+wsma agent exec
+!
+wsma agent config
+!
+wsma agent filesys
+!
+wsma agent notify
+!
+!
+end

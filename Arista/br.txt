@@ -1,0 +1,133 @@
+! device: BR (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname BR
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Port-Channel11
+   mtu 2000
+   no switchport
+!
+interface Port-Channel11.11
+   description L2-LNS-BR-LNS
+   encapsulation dot1q vlan 11
+   ip address 100.65.0.6/29
+   ipv6 enable
+   ipv6 address 2001:dead:cafe:beef::6/125
+!
+interface Ethernet1
+   description L2-ISIS-LNS-BR
+   mtu 2000
+   no switchport
+   channel-group 11 mode active
+!
+ interface Ethernet2
+   description L2-ISIS-LNS-BR
+   mtu 2000
+   no switchport
+   channel-group 11 mode active
+!
+interface Ethernet3
+   mtu 2000
+   no switchport
+!
+interface Ethernet3.100
+   description TRANSIT_COGENT
+   encapsulation dot1q vlan 100
+   ip address 140.150.160.1/30
+   ipv6 enable
+   ipv6 address 2001:abcd:abcd::1/127
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Management1
+!
+ip routing
+!
+ip prefix-list DEFAULT_ROUTE
+   seq 10 permit 0.0.0.0/0
+!
+ip prefix-list PL_OWN_SUBNET
+   seq 10 permit 109.205.64.0/22
+   seq 20 permit 185.17.56.0/24
+!
+ipv6 prefix-list DEFAULT_ROUTE_V6
+   seq 10 permit ::/0
+!
+ipv6 prefix-list PL_OWN_SUBNET_V6
+   seq 10 permit 2001:dead::/32
+   seq 20 permit 2001:cafe::/32
+!
+ipv6 unicast-routing
+!
+ip route 109.205.64.0/22 Null0
+ip route 185.17.56.0/24 Null0
+!
+ipv6 route 2001:cafe::/32 Null0
+ipv6 route 2001:dead::/32 Null0
+!
+route-map RM_DEFAULT_ROUTE permit 10
+   match ip address prefix-list DEFAULT_ROUTE
+!
+route-map RM_DEFAULT_ROUTE_V6 permit 10
+   match ipv6 address prefix-list DEFAULT_ROUTE_V6
+!
+route-map RM_OWN_SUBNET permit 10
+   match ip address prefix-list PL_OWN_SUBNET
+!
+route-map RM_OWN_SUBNET_V6 permit 10
+   match ipv6 address prefix-list PL_OWN_SUBNET_V6
+!
+router bgp 57752
+   neighbor LNS peer group
+   neighbor LNS remote-as 64555
+   neighbor LNS_V6 peer group
+   neighbor LNS_V6 remote-as 64555
+   neighbor 100.65.0.1 peer group LNS
+   neighbor 100.65.0.1 route-map RM_DEFAULT_ROUTE out
+   neighbor 100.65.0.2 peer group LNS
+   neighbor 100.65.0.2 route-map RM_DEFAULT_ROUTE out
+   neighbor 140.150.160.2 remote-as 174
+   neighbor 140.150.160.2 description TRANSIT_COGENT
+   neighbor 140.150.160.2 route-map RM_OWN_SUBNET out
+   neighbor 2001:abcd:abcd:: remote-as 174
+   neighbor 2001:abcd:abcd:: description TRANSIT_COGENT_V6
+   neighbor 2001:abcd:abcd:: route-map RM_OWN_SUBNET_V6 out
+   neighbor 2001:dead:cafe:beef::1 peer group LNS_V6
+   neighbor 2001:dead:cafe:beef::1 route-map RM_DEFAULT_ROUTE_V6 out
+   neighbor 2001:dead:cafe:beef::2 peer group LNS_V6
+   neighbor 2001:dead:cafe:beef::2 route-map RM_DEFAULT_ROUTE_V6 out
+   !
+   address-family ipv4
+      neighbor 140.150.160.2 activate
+      network 109.205.64.0/22
+      network 185.17.56.0/24
+   !
+   address-family ipv6
+      neighbor 2001:abcd:abcd:: activate
+      neighbor 2001:dead:cafe:beef::1 activate
+      neighbor 2001:dead:cafe:beef::2 activate
+      network 2001:cafe::/32
+      network 2001:dead::/32
+!
+end

@@ -11,6 +11,8 @@ boot-start-marker
 boot-end-marker
 !
 !
+!
+!
 aaa new-model
 !
 !
@@ -22,6 +24,7 @@ aaa new-model
 aaa session-id common
 port-channel mc-lag
 !
+
 !
 !
 !
@@ -44,6 +47,11 @@ subscriber templating
 !
 !
 !
+!
+ipv6 unicast-routing
+!
+mpls label protocol ldp
+mpls ldp explicit-null
 !
 !
 multilink bundle-name authenticated
@@ -93,13 +101,16 @@ redundancy
 !
 !
 !
-!
 interface Loopback1
  description LO_MPLS
  ip address 100.127.0.1 255.255.255.255
  ip router isis
  ipv6 address 2001:DEAD:C0CA:C01A::1/128
  ipv6 router isis
+!
+interface Loopback55
+ ip address 109.205.66.127 255.255.255.255
+!
 !
 interface Port-channel10
  description PO_OUT_LEAF_B1
@@ -117,6 +128,22 @@ interface Port-channel10.10
  ipv6 address 2001:DEAD:CAFE:BABE::1/125
  ipv6 enable
  ipv6 router isis
+ mpls ip
+!
+interface Port-channel10.11
+ description L2-LNS-BR-LNS
+ encapsulation dot1Q 11
+ ip address 100.65.0.1 255.255.255.248
+ ipv6 address 2001:DEAD:CAFE:BEEF::1/125
+ ipv6 enable
+!
+interface GigabitEthernet1
+ description IN_LEAF
+ mtu 9214
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
 !
 interface GigabitEthernet2
  no ip address
@@ -124,7 +151,10 @@ interface GigabitEthernet2
  negotiation auto
  no mop enabled
  no mop sysid
-!!
+!
+interface GigabitEthernet2.500
+ encapsulation dot1Q 500 second-dot1q any
+!
 interface GigabitEthernet3
  no ip address
  shutdown
@@ -183,11 +213,53 @@ router isis
  is-type level-2-only
  metric-style narrow
  log-adjacency-changes
+ mpls ldp autoconfig
 !
+router bgp 64555
+ bgp log-neighbor-changes
+ timers bgp 30 60
+ neighbor LNS_V4 peer-group
+ neighbor LNS_V4 remote-as 64555
+ neighbor LNS_V4 update-source Loopback1
+ neighbor LNS_V6 peer-group
+ neighbor LNS_V6 remote-as 64555
+ neighbor LNS_V6 update-source Loopback1
+ neighbor 4G_STARLINK peer-group
+ neighbor 2001:DEAD:C0CA:C01A::2 peer-group LNS_V6
+ neighbor 2001:DEAD:CAFE:BEEF::6 remote-as 57752
+ neighbor 100.65.0.6 remote-as 57752
+ neighbor 100.127.0.2 peer-group LNS_V4
+ !
+ address-family ipv4
+  bgp suppress-inactive
+  redistribute connected
+  neighbor LNS_V4 next-hop-self
+  no neighbor 2001:DEAD:C0CA:C01A::2 activate
+  no neighbor 2001:DEAD:CAFE:BEEF::6 activate
+  neighbor 100.65.0.6 activate
+  neighbor 100.127.0.2 activate
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor LNS_V4 send-community both
+  neighbor 100.127.0.2 activate
+ exit-address-family
+ !
+ address-family ipv6
+  redistribute connected
+  neighbor 2001:DEAD:C0CA:C01A::2 activate
+  neighbor 2001:DEAD:C0CA:C01A::2 soft-reconfiguration inbound
+  neighbor 2001:DEAD:CAFE:BEEF::6 activate
+ exit-address-family
+ !
+ address-family vpnv6
+  neighbor LNS_V6 send-community both
+  neighbor 2001:DEAD:C0CA:C01A::2 activate
+ exit-address-family
+ !
 ip forward-protocol nd
 no ip http server
 no ip http secure-server
-!
 !
 !
 !

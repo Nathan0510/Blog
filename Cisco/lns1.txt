@@ -152,9 +152,6 @@ interface GigabitEthernet2
  no mop enabled
  no mop sysid
 !
-interface GigabitEthernet2.500
- encapsulation dot1Q 500 second-dot1q any
-!
 interface GigabitEthernet3
  no ip address
  shutdown

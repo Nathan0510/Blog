@@ -125,7 +125,6 @@ interface Vxlan1
    vxlan encapsulation ipv6
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
-   vxlan vlan 500 vni 100500
 !
 ip routing
 ip routing vrf mgmt

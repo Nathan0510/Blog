@@ -1,4 +1,4 @@
- ! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
+! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -25,6 +25,9 @@ vlan 11
 !
 vlan 100
    name COGENT
+!
+vlan 500
+   name SVLAN_COLLECTE_L2
 !
 vlan 4090
    name vlan-peer-link
@@ -135,6 +138,7 @@ interface Vxlan1
    vxlan encapsulation ipv6
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
+   vxlan vlan 500 vni 100500
 !
 ip routing
 ip routing vrf mgmt
@@ -187,6 +191,11 @@ router bgp 65002
    vlan 11
       rd 65001:100011
       route-target both 11:100011
+      redistribute learned
+   !
+   vlan 500
+      rd 65002:100500
+      route-target both 500:100500
       redistribute learned
    !
    address-family evpn

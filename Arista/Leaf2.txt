@@ -23,6 +23,9 @@ vlan 10
 vlan 11
    name INTERCO-BR-LNS
 !
+vlan 500
+   name SVLAN_COLLECTE_L2
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -36,7 +39,7 @@ vrf instance mgmt
 interface Port-Channel10
    description PO_OUT_LNS1
    mtu 9214
-   switchport trunk allowed vlan 10-11,500
+   switchport trunk allowed vlan 10-11,3999
    switchport mode trunk
    mlag 10
 !
@@ -52,6 +55,7 @@ interface Port-Channel100
    switchport trunk group MLAG
 !
 interface Ethernet1
+   speed forced 1000full
 !
 interface Ethernet2
    mtu 9214
@@ -64,6 +68,7 @@ interface Ethernet3
    ipv6 enable
 !
 interface Ethernet4
+   mtu 9214
 !
 interface Ethernet5
    description IN_LNS1
@@ -119,7 +124,7 @@ interface Vxlan1
    vxlan encapsulation ipv6
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
-   vxlan vlan 100 vni 10100
+   vxlan vlan 500 vni 100500
 !
 ip routing
 ip routing vrf mgmt
@@ -172,6 +177,11 @@ router bgp 65001
    vlan 11
       rd 65001:100011
       route-target both 11:100011
+      redistribute learned
+   !
+   vlan 500
+      rd 65001:100500
+      route-target both 500:100500
       redistribute learned
    !
    address-family evpn

@@ -12,6 +12,7 @@ boot-end-marker
 !
 !
 !
+!
 aaa new-model
 !
 !
@@ -21,6 +22,7 @@ aaa new-model
 !
 !
 aaa session-id common
+!
 !
 !
 !
@@ -75,6 +77,9 @@ spanning-tree extend system-id
 !
 !
 !
+username nathan password 0 nathan
+username test password 0 test
+!
 redundancy
 !
 !
@@ -97,6 +102,8 @@ redundancy
 !
 !
 !
+bba-group pppoe global
+ virtual-template 1
 !
 !
 !
@@ -107,6 +114,8 @@ interface Loopback1
  ipv6 address 2001:DEAD:C0CA:C01A::2/128
  ipv6 router isis
 !
+interface Loopback2
+ ip address 109.205.64.2 255.255.255.255
 !
 interface Port-channel10
  mtu 2000
@@ -133,12 +142,15 @@ interface Port-channel10.11
  ipv6 enable
 !
 interface GigabitEthernet1
+ mtu 9214
  no ip address
- shutdown
  negotiation auto
  no mop enabled
  no mop sysid
 !
+interface GigabitEthernet1.500
+ encapsulation dot1Q 500 second-dot1q any
+ pppoe enable group global
 !
 interface GigabitEthernet2
  no ip address
@@ -198,6 +210,13 @@ interface GigabitEthernet9
  no mop sysid
  channel-group 10 mode active
 !
+interface Virtual-Template1
+ mtu 1492
+ ip unnumbered Loopback2
+ peer default ip address pool TEST
+ ppp authentication chap
+!
+router ospf 1
 !
 router isis
  net 49.0001.1001.2700.0100.00
@@ -249,6 +268,7 @@ router bgp 64555
  exit-address-family
  !
 !
+ip local pool TEST 109.205.64.50 109.205.64.100
 ip forward-protocol nd
 no ip http server
 no ip http secure-server

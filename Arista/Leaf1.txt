@@ -39,7 +39,7 @@ vrf instance mgmt
 interface Port-Channel10
    description PO_OUT_LNS1
    mtu 9214
-   switchport trunk allowed vlan 10-11,500
+   switchport trunk allowed vlan 10-11
    switchport mode trunk
    mlag 10
 !
@@ -86,9 +86,6 @@ interface Ethernet7
 interface Ethernet8
 !
 interface Ethernet9
-   no switchport
-   vrf test
-   ip address 192.168.14.1/24
 !
 interface Ethernet10
    description PEER-LINK LEAF2 - et10
@@ -177,6 +174,11 @@ router bgp 65001
    vlan 11
       rd 65001:100011
       route-target both 11:100011
+      redistribute learned
+   !
+   vlan 500
+      rd 65001:100500
+      route-target both 11:100500
       redistribute learned
    !
    address-family evpn

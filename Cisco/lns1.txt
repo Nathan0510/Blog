@@ -24,7 +24,7 @@ aaa new-model
 aaa session-id common
 port-channel mc-lag
 !
-
+!
 !
 !
 !
@@ -78,6 +78,9 @@ spanning-tree extend system-id
 !
 !
 !
+username nathan password 0 nathan
+username test password 0 test
+!
 redundancy
 !
 !
@@ -88,16 +91,8 @@ redundancy
 !
 !
 !
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
+bba-group pppoe global
+ virtual-template 1
 !
 !
 !
@@ -108,9 +103,11 @@ interface Loopback1
  ipv6 address 2001:DEAD:C0CA:C01A::1/128
  ipv6 router isis
 !
+interface Loopback2
+ ip address 109.205.64.1 255.255.255.255
+!
 interface Loopback55
  ip address 109.205.66.127 255.255.255.255
-!
 !
 interface Port-channel10
  description PO_OUT_LEAF_B1
@@ -145,7 +142,13 @@ interface GigabitEthernet1
  no mop enabled
  no mop sysid
 !
+interface GigabitEthernet1.500
+ description COLLECTE_COVAGE_L2
+ encapsulation dot1Q 500 second-dot1q any
+ pppoe enable group global
+!
 interface GigabitEthernet2
+ mtu 9214
  no ip address
  shutdown
  negotiation auto
@@ -205,6 +208,14 @@ interface GigabitEthernet9
  no mop sysid
  channel-group 10 mode active
 !
+interface Virtual-Template1
+ mtu 1492
+ ip unnumbered Loopback2
+ peer default ip address pool TEST
+ ppp authentication chap callin
+!
+router ospf 1
+!
 router isis
  net 49.0001.1001.2700.0000.00
  is-type level-2-only
@@ -231,6 +242,7 @@ router bgp 64555
   bgp suppress-inactive
   redistribute connected
   neighbor LNS_V4 next-hop-self
+  neighbor 4G_STARLINK activate
   no neighbor 2001:DEAD:C0CA:C01A::2 activate
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
   neighbor 100.65.0.6 activate
@@ -254,9 +266,12 @@ router bgp 64555
   neighbor 2001:DEAD:C0CA:C01A::2 activate
  exit-address-family
  !
+!
+ip local pool TEST 109.205.64.50 109.205.64.100
 ip forward-protocol nd
 no ip http server
 no ip http secure-server
+!
 !
 !
 !

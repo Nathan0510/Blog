@@ -24,7 +24,7 @@ vlan 11
    name INTERCO-BR-LNS
 !
 vlan 500
-   name SVLAN-COVAGE-L2
+   name SVLAN_COLLECTE_L2
 !
 vlan 4090
    name vlan-peer-link

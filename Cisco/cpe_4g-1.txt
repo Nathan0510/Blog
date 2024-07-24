@@ -1,0 +1,209 @@
+version 16.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname 4G_1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition VOIP
+ rd 64666:64666
+ route-target import 64666:64666
+ !
+ address-family ipv4
+  route-target export 64666:64666
+  route-target import 64666:64666
+ exit-address-family
+!
+!
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+!
+!
+!
+!
+!
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 9SUPYRBRUGR
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+!
+redundancy
+!
+crypto ikev2 proposal IKEv2_PROPOSAL
+ encryption aes-cbc-256
+ integrity sha256
+ group 20
+!
+crypto ikev2 policy IKEv2_POLICY
+ proposal IKEv2_PROPOSAL
+!
+crypto ikev2 keyring IKEv2_KEYRING
+ peer SPOKE_PEER
+  address 109.205.66.127
+  pre-shared-key local TEST
+  pre-shared-key remote TEST
+ !
+!
+!
+crypto ikev2 profile IKEv2_PROFILE
+ match identity remote address 109.205.66.127 255.255.255.255
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local IKEv2_KEYRING
+ lifetime 3600
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto ipsec transform-set PROFILE-TRANSFORM esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto ipsec profile IPSEC_PROFILE
+ set transform-set PROFILE-TRANSFORM
+ set ikev2-profile IKEv2_PROFILE
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Tunnel1
+ vrf forwarding VOIP
+ ip address 169.254.0.3 255.255.0.0
+ ip nhrp authentication NATHAN
+ ip nhrp map 169.254.0.1 109.205.66.127
+ ip nhrp map multicast 109.205.66.127
+ ip nhrp network-id 1
+ ip nhrp nhs 169.254.0.1
+ tunnel source GigabitEthernet1
+ tunnel destination 109.205.66.127
+ tunnel key 510
+ tunnel protection ipsec profile IPSEC_PROFILE
+!
+interface GigabitEthernet1
+ ip address 93.174.0.3 255.255.0.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ vrf forwarding VOIP
+ ip address 172.16.1.254 255.255.255.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet3
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet4
+ no ip address
+ shutdown
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+router bgp 64666
+ bgp log-neighbor-changes
+ !
+ address-family ipv4 vrf VOIP
+  redistribute connected
+  neighbor 169.254.0.1 remote-as 64555
+  neighbor 169.254.0.1 activate
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip route 0.0.0.0 0.0.0.0 GigabitEthernet1
+!
+!
+!
+!
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ login
+!
+wsma agent exec
+!
+wsma agent config
+!
+wsma agent filesys
+!
+wsma agent notify
+!
+!
+end

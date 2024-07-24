@@ -101,8 +101,7 @@ interface GigabitEthernet1
  no mop sysid
 !
 interface GigabitEthernet2
- no ip address
- shutdown
+ ip address 93.174.0.1 255.255.0.0
  negotiation auto
  no mop enabled
  no mop sysid

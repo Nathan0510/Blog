@@ -11,7 +11,19 @@ boot-start-marker
 boot-end-marker
 !
 !
+vrf definition VOIP
+ rd 64555:64555
+ route-target import 64555:64555
+ !
+ address-family ipv4
+  route-target export 64555:64555
+  route-target import 64555:64555
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
 !
+enable password nathan
 !
 aaa new-model
 !
@@ -30,8 +42,8 @@ port-channel mc-lag
 !
 !
 !
-!
 no ip domain lookup
+ip domain name naruto.ninja
 !
 !
 !
@@ -78,11 +90,51 @@ spanning-tree extend system-id
 !
 !
 !
-username nathan password 0 nathan
+username nathan privilege 15 password 0 nathan
 username test password 0 test
 !
 redundancy
 !
+crypto ikev2 proposal IKEv2_PROPOSAL
+ encryption aes-cbc-256
+ integrity sha256
+ group 20
+!
+crypto ikev2 policy IKEv2_POLICY
+ proposal IKEv2_PROPOSAL
+!
+crypto ikev2 keyring IKEv2_KEYRING
+ peer HUB_PEER
+  address 0.0.0.0 0.0.0.0
+  pre-shared-key local TEST
+  pre-shared-key remote TEST
+ !
+!
+!
+crypto ikev2 profile IKEv2_PROFILE
+ match identity remote address 0.0.0.0
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local IKEv2_KEYRING
+ lifetime 3600
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto ipsec transform-set PROFILE-TRANSFORM esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto ipsec profile IPSEC_PROFILE
+ set transform-set PROFILE-TRANSFORM
+ set ikev2-profile IKEv2_PROFILE
 !
 !
 !
@@ -103,15 +155,11 @@ interface Loopback1
  ipv6 address 2001:DEAD:C0CA:C01A::1/128
  ipv6 router isis
 !
-interface Loopback2
- ip address 109.205.64.1 255.255.255.255
-!
 interface Loopback55
  ip address 109.205.66.127 255.255.255.255
 !
 interface Port-channel10
  description PO_OUT_LEAF_B1
- mtu 2000
  no ip address
  no negotiation auto
  no mop enabled
@@ -133,6 +181,22 @@ interface Port-channel10.11
  ip address 100.65.0.1 255.255.255.248
  ipv6 address 2001:DEAD:CAFE:BEEF::1/125
  ipv6 enable
+!
+interface Port-channel10.3999
+ description *** INTERCO PROXMOX ***
+ encapsulation dot1Q 3999
+ ip address 100.100.100.10 255.255.255.0
+!
+interface Tunnel1
+ vrf forwarding VOIP
+ ip address 169.254.0.1 255.255.0.0
+ no ip redirects
+ ip nhrp authentication NATHAN
+ ip nhrp network-id 1
+ tunnel source Loopback55
+ tunnel mode gre multipoint
+ tunnel key 510
+ tunnel protection ipsec profile IPSEC_PROFILE
 !
 interface GigabitEthernet1
  description IN_LEAF
@@ -210,11 +274,9 @@ interface GigabitEthernet9
 !
 interface Virtual-Template1
  mtu 1492
- ip unnumbered Loopback2
- peer default ip address pool TEST
+ no ip address
+ no peer default ip address
  ppp authentication chap callin
-!
-router ospf 1
 !
 router isis
  net 49.0001.1001.2700.0000.00
@@ -225,6 +287,7 @@ router isis
 !
 router bgp 64555
  bgp log-neighbor-changes
+ bgp listen range 169.254.0.0/16 peer-group 4G_STARLINK
  timers bgp 30 60
  neighbor LNS_V4 peer-group
  neighbor LNS_V4 remote-as 64555
@@ -232,7 +295,6 @@ router bgp 64555
  neighbor LNS_V6 peer-group
  neighbor LNS_V6 remote-as 64555
  neighbor LNS_V6 update-source Loopback1
- neighbor 4G_STARLINK peer-group
  neighbor 2001:DEAD:C0CA:C01A::2 peer-group LNS_V6
  neighbor 2001:DEAD:CAFE:BEEF::6 remote-as 57752
  neighbor 100.65.0.6 remote-as 57752
@@ -242,7 +304,6 @@ router bgp 64555
   bgp suppress-inactive
   redistribute connected
   neighbor LNS_V4 next-hop-self
-  neighbor 4G_STARLINK activate
   no neighbor 2001:DEAD:C0CA:C01A::2 activate
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
   neighbor 100.65.0.6 activate
@@ -266,13 +327,27 @@ router bgp 64555
   neighbor 2001:DEAD:C0CA:C01A::2 activate
  exit-address-family
  !
+ address-family ipv4 vrf VOIP
+  neighbor 4G_STARLINK peer-group
+  neighbor 4G_STARLINK remote-as 64666
+  neighbor 4G_STARLINK route-map RM_VOIP_CUSTOMER in
+ exit-address-family
 !
-ip local pool TEST 109.205.64.50 109.205.64.100
 ip forward-protocol nd
 no ip http server
 no ip http secure-server
+ip route 100.100.101.0 255.255.255.0 Port-channel10.3999 100.100.100.1
+ip route 192.168.222.0 255.255.255.0 Port-channel10.3999 100.100.100.1
+!
+ip ssh server algorithm mac hmac-sha2-512
+ip ssh server algorithm encryption aes256-ctr aes192-ctr aes128-ctr
 !
 !
+ip prefix-list PL_VOIP_CUSTOMER seq 5 permit 172.16.0.0/16 ge 24 le 24
+!
+!
+route-map RM_VOIP_CUSTOMER permit 10
+ match ip address prefix-list PL_VOIP_CUSTOMER
 !
 !
 !
@@ -289,6 +364,8 @@ control-plane
 line con 0
  stopbits 1
 line vty 0 4
+ transport input ssh
+line vty 5 15
 !
 wsma agent exec
 !

@@ -13,8 +13,6 @@ set 0 name=serial0
 /ip address
 add address=192.168.1.253/24 interface=ether2 network=192.168.1.0
 add address=192.168.1.254 interface=vrrp1 network=192.168.1.254
-/ip dhcp-client
-add interface=ether1
 /ip firewall nat
 add action=src-nat chain=srcnat src-address=192.168.1.0/24 to-addresses=\
     109.205.64.1

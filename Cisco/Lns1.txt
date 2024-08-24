@@ -28,6 +28,12 @@ enable password nathan
 aaa new-model
 !
 !
+aaa group server radius radius-naruto
+ server name radius
+!
+aaa authentication ppp default group radius-naruto
+aaa authorization network default group radius-naruto local
+aaa accounting network default start-stop group radius-naruto
 !
 !
 !
@@ -61,7 +67,6 @@ subscriber templating
 !
 !
 ipv6 unicast-routing
-!
 mpls label protocol ldp
 mpls ldp explicit-null
 !
@@ -90,8 +95,6 @@ spanning-tree extend system-id
 !
 !
 !
-username nathan privilege 15 password 0 nathan
-username test password 0 test
 !
 redundancy
 !
@@ -160,6 +163,7 @@ interface Loopback55
 !
 interface Port-channel10
  description PO_OUT_LEAF_B1
+ mtu 2000
  no ip address
  no negotiation auto
  no mop enabled
@@ -274,7 +278,7 @@ interface GigabitEthernet9
 !
 interface Virtual-Template1
  mtu 1492
- no ip address
+ ip unnumbered Loopback1
  no peer default ip address
  ppp authentication chap callin
 !
@@ -303,6 +307,7 @@ router bgp 64555
  address-family ipv4
   bgp suppress-inactive
   redistribute connected
+  redistribute static
   neighbor LNS_V4 next-hop-self
   no neighbor 2001:DEAD:C0CA:C01A::2 activate
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
@@ -337,7 +342,6 @@ ip forward-protocol nd
 no ip http server
 no ip http secure-server
 ip route 100.100.101.0 255.255.255.0 Port-channel10.3999 100.100.100.1
-ip route 192.168.222.0 255.255.255.0 Port-channel10.3999 100.100.100.1
 !
 ip ssh server algorithm mac hmac-sha2-512
 ip ssh server algorithm encryption aes256-ctr aes192-ctr aes128-ctr
@@ -352,6 +356,9 @@ route-map RM_VOIP_CUSTOMER permit 10
 !
 !
 !
+radius server radius
+ address ipv4 100.100.101.1 auth-port 1812 acct-port 1813
+ key naruto
 !
 !
 control-plane

@@ -1,0 +1,26 @@
+# aug/24/2024 12:19:43 by RouterOS 7.6
+# software id =
+#
+/interface pppoe-client
+add add-default-route=yes disabled=no interface=ether1 name=test \
+    service-name=internet user=nathan@naruto.ninja
+/interface vrrp
+add interface=ether2 name=vrrp1 priority=110
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+/port
+set 0 name=serial0
+/ip address
+add address=192.168.1.252/24 interface=ether2 network=192.168.1.0
+add address=192.168.1.254 interface=vrrp1 network=192.168.1.254
+add address=109.205.64.1 interface=loopback0 network=109.205.64.1
+/ip firewall nat
+add action=src-nat chain=srcnat src-address=192.168.1.0/24 to-addresses=\
+    109.205.64.1
+/ipv6 nd prefix default
+set preferred-lifetime=2d valid-lifetime=2d
+/system identity
+set name=Naruto
+/tool netwatch
+add down-script="/interface vrrp set 0 priority=50" host=100.127.0.1 \
+    interval=30s type=simple up-script="/interface vrrp set 0 priority=110"

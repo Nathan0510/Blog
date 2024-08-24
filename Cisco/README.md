@@ -1,1 +1,1 @@
-Ici, les configurations des LNS/BR
+Ici, les configurations des LNS

@@ -11,18 +11,31 @@ boot-start-marker
 boot-end-marker
 !
 !
+vrf definition VOIP
+ rd 64555:64555
+ route-target import 64555:64555
+ !
+ address-family ipv4
+  route-target export 64555:64555
+  route-target import 64555:64555
+ exit-address-family
 !
 !
 aaa new-model
 !
 !
+aaa group server radius radius-naruto
+ server name radius
+!
+aaa authentication ppp default group radius-naruto
+aaa authorization network default group radius-naruto local
+aaa accounting network default start-stop group radius-naruto
 !
 !
 !
 !
 !
 aaa session-id common
-!
 !
 !
 !
@@ -48,7 +61,6 @@ subscriber templating
 !
 !
 ipv6 unicast-routing
-!
 mpls label protocol ldp
 mpls ldp explicit-null
 !
@@ -77,8 +89,6 @@ spanning-tree extend system-id
 !
 !
 !
-username nathan password 0 nathan
-username test password 0 test
 !
 redundancy
 !
@@ -114,8 +124,8 @@ interface Loopback1
  ipv6 address 2001:DEAD:C0CA:C01A::2/128
  ipv6 router isis
 !
-interface Loopback2
- ip address 109.205.64.2 255.255.255.255
+interface Loopback55
+ ip address 109.205.66.128 255.255.255.255
 !
 interface Port-channel10
  mtu 2000
@@ -141,6 +151,11 @@ interface Port-channel10.11
  ipv6 address 2001:DEAD:CAFE:BEEF::2/125
  ipv6 enable
 !
+interface Port-channel10.3999
+ description *** INTERCO PROXMOX ***
+ encapsulation dot1Q 3999
+ ip address 100.100.100.11 255.255.255.0
+!
 interface GigabitEthernet1
  mtu 9214
  no ip address
@@ -150,7 +165,7 @@ interface GigabitEthernet1
 !
 interface GigabitEthernet1.500
  encapsulation dot1Q 500 second-dot1q any
- pppoe enable group global
+ e enable group global
 !
 interface GigabitEthernet2
  no ip address
@@ -212,11 +227,9 @@ interface GigabitEthernet9
 !
 interface Virtual-Template1
  mtu 1492
- ip unnumbered Loopback2
- peer default ip address pool TEST
+ ip unnumbered Loopback55
+ no peer default ip address
  ppp authentication chap
-!
-router ospf 1
 !
 router isis
  net 49.0001.1001.2700.0100.00
@@ -227,6 +240,7 @@ router isis
 !
 router bgp 64555
  bgp log-neighbor-changes
+ bgp listen range 169.254.0.0/16 peer-group 4G_STARLINK
  timers bgp 30 60
  neighbor LNS_V4 peer-group
  neighbor LNS_V4 remote-as 64555
@@ -242,6 +256,7 @@ router bgp 64555
  address-family ipv4
   bgp suppress-inactive
   redistribute connected
+  redistribute static
   neighbor LNS_V4 next-hop-self
   no neighbor 2001:DEAD:C0CA:C01A::1 activate
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
@@ -267,17 +282,32 @@ router bgp 64555
   neighbor 2001:DEAD:C0CA:C01A::1 activate
  exit-address-family
  !
+ address-family ipv4 vrf VOIP
+  neighbor 4G_STARLINK peer-group
+  neighbor 4G_STARLINK remote-as 64666
+  neighbor 4G_STARLINK route-map RM_VOIP_CUSTOMER in
+ exit-address-family
 !
-ip local pool TEST 109.205.64.50 109.205.64.100
 ip forward-protocol nd
 no ip http server
 no ip http secure-server
+ip route 100.100.101.0 255.255.255.0 Port-channel10.3999 100.100.100.1
+!
+!
+!
+ip prefix-list PL_VOIP_CUSTOMER seq 5 permit 172.16.0.0/16 ge 24 le 24
+ipv6 local pool PPPOE_V6 2001:ABCD::/60 64
+!
+!
+route-map RM_VOIP_CUSTOMER permit 10
+ match ip address prefix-list PL_VOIP_CUSTOMER
 !
 !
 !
 !
-!
-!
+radius server radius
+ address ipv4 100.100.101.1 auth-port 1812 acct-port 1813
+ key naruto
 !
 !
 control-plane

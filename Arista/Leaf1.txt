@@ -1,4 +1,4 @@
- ! device: Leaf1-B1 (vEOS-lab, EOS-4.31.0F)
+! device: Leaf1-B1 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -26,6 +26,18 @@ vlan 11
 vlan 500
    name SVLAN_COVAGE_L2
 !
+vlan 2000
+   name OUT-FORTI
+!
+vlan 2001
+   name IN-FORTI
+!
+vlan 2002
+   name MPLS-FORTI
+!
+vlan 3999
+   name INTERCO-PROXMOX-HOME
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -36,16 +48,27 @@ vlan 4091
 !
 vrf instance mgmt
 !
+vrf instance test
+!
+management api http-commands
+   no shutdown
+   !
+   vrf test
+      no shutdown
+!
+management http-server
+   protocol https port 4443
+!
 interface Port-Channel10
    description PO_OUT_LNS1
    mtu 9214
-   switchport trunk allowed vlan 10-11
+   switchport trunk allowed vlan 10-11,3999
    switchport mode trunk
    mlag 10
 !
 interface Port-Channel20
    description PO_IN_LNS1
-   switchport trunk allowed vlan 500
+   switchport trunk allowed vlan 500,2000-2002
    switchport mode trunk
    mlag 20
 !
@@ -60,6 +83,10 @@ interface Ethernet1
    ipv6 enable
 !
 interface Ethernet2
+   description COLLECTE_COVAGE_L2
+   switchport access vlan 500
+   switchport mode dot1q-tunnel
+   spanning-tree bpdufilter enable
 !
 interface Ethernet3
 !
@@ -86,6 +113,9 @@ interface Ethernet7
 interface Ethernet8
 !
 interface Ethernet9
+   no switchport
+   vrf test
+   ip address 192.168.14.1/24
 !
 interface Ethernet10
    description PEER-LINK LEAF2 - et10
@@ -123,9 +153,14 @@ interface Vxlan1
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
    vxlan vlan 500 vni 100500
+   vxlan vlan 2000 vni 102000
+   vxlan vlan 2001 vni 102001
+   vxlan vlan 2002 vni 102002
+   vxlan vlan 3999 vni 103999
 !
 ip routing
 ip routing vrf mgmt
+no ip routing vrf test
 !
 ipv6 prefix-list PL_UNDERLAY_LO
    seq 10 permit 2001:172:16:1::1/128
@@ -179,7 +214,27 @@ router bgp 65001
    !
    vlan 500
       rd 65001:100500
-      route-target both 11:100500
+      route-target both 500:100500
+      redistribute learned
+   !
+   vlan 2000
+      rd 65001:102000
+      route-target both 2000:102000
+      redistribute learned
+   !
+   vlan 2001
+      rd 65001:102001
+      route-target both 2001:102001
+      redistribute learned
+   !
+   vlan 2002
+      rd 65001:102002
+      route-target both 2002:102002
+      redistribute learned
+   !
+   vlan 3999
+      rd 65001:103999
+      route-target both 3999:103999
       redistribute learned
    !
    address-family evpn

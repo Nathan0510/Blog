@@ -11,6 +11,14 @@ boot-start-marker
 boot-end-marker
 !
 !
+vrf definition Customer1
+ rd 64555:4200000000
+ !
+ address-family ipv4
+  route-target export 64555:4200000000
+  route-target import 64555:4200000000
+ exit-address-family
+!
 vrf definition VOIP
  rd 64555:64555
  route-target import 64555:64555
@@ -161,9 +169,12 @@ interface Loopback1
 interface Loopback55
  ip address 109.205.66.127 255.255.255.255
 !
+interface Loopback65000
+ vrf forwarding Customer1
+ ip address 100.110.1.1 255.255.255.255
+!
 interface Port-channel10
  description PO_OUT_LEAF_B1
- mtu 2000
  no ip address
  no negotiation auto
  no mop enabled
@@ -214,6 +225,17 @@ interface GigabitEthernet1.500
  description COLLECTE_COVAGE_L2
  encapsulation dot1Q 500 second-dot1q any
  pppoe enable group global
+!
+interface GigabitEthernet1.20000100
+ description OUT-FORTI
+ encapsulation dot1Q 2000 second-dot1q 100
+ ip address 172.30.254.1 255.255.255.248
+!
+interface GigabitEthernet1.20020100
+ description MPLS-FORTI
+ encapsulation dot1Q 2002 second-dot1q 100
+ vrf forwarding Customer1
+ ip address 172.31.254.1 255.255.255.248
 !
 interface GigabitEthernet2
  mtu 9214
@@ -290,6 +312,7 @@ router isis
  mpls ldp autoconfig
 !
 router bgp 64555
+ bgp asnotation dot
  bgp log-neighbor-changes
  bgp listen range 169.254.0.0/16 peer-group 4G_STARLINK
  timers bgp 30 60
@@ -303,6 +326,8 @@ router bgp 64555
  neighbor 2001:DEAD:CAFE:BEEF::6 remote-as 57752
  neighbor 100.65.0.6 remote-as 57752
  neighbor 100.127.0.2 peer-group LNS_V4
+ neighbor 172.30.254.6 remote-as 64086.59904
+ neighbor 172.30.254.6 description OUT-FORTI
  !
  address-family ipv4
   bgp suppress-inactive
@@ -313,6 +338,10 @@ router bgp 64555
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
   neighbor 100.65.0.6 activate
   neighbor 100.127.0.2 activate
+  neighbor 172.30.254.6 activate
+  neighbor 172.30.254.6 default-originate
+  neighbor 172.30.254.6 route-map RM_CUSTOMER_PUB in
+  neighbor 172.30.254.6 route-map RM_DEFAULT_ROUTE out
  exit-address-family
  !
  address-family vpnv4
@@ -332,6 +361,16 @@ router bgp 64555
   neighbor 2001:DEAD:C0CA:C01A::2 activate
  exit-address-family
  !
+ address-family ipv4 vrf Customer1
+  redistribute connected
+  redistribute static
+  neighbor 172.31.254.6 remote-as 64086.59904
+  neighbor 172.31.254.6 description MPLS-FORTI
+  neighbor 172.31.254.6 activate
+  neighbor 172.31.254.6 soft-reconfiguration inbound
+  neighbor 172.31.254.6 route-map RM_DEFAULT_ROUTE in
+ exit-address-family
+ !
  address-family ipv4 vrf VOIP
   neighbor 4G_STARLINK peer-group
   neighbor 4G_STARLINK remote-as 64666
@@ -347,11 +386,21 @@ ip ssh server algorithm mac hmac-sha2-512
 ip ssh server algorithm encryption aes256-ctr aes192-ctr aes128-ctr
 !
 !
+ip prefix-list PL_CUSTOMER_PUB seq 5 permit 109.205.64.2/32
+!
+ip prefix-list PL_DEFAULT_ROUTE seq 5 permit 0.0.0.0/0
+!
 ip prefix-list PL_VOIP_CUSTOMER seq 5 permit 172.16.0.0/16 ge 24 le 24
 !
 !
+route-map RM_DEFAULT_ROUTE permit 10
+ match ip address prefix-list PL_DEFAULT_ROUTE
+!
 route-map RM_VOIP_CUSTOMER permit 10
  match ip address prefix-list PL_VOIP_CUSTOMER
+!
+route-map RM_CUSTOMER_PUB permit 10
+ match ip address prefix-list PL_CUSTOMER_PUB
 !
 !
 !

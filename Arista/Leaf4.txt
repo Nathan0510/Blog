@@ -1,4 +1,4 @@
-! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
+ ! device: Leaf4-B2 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -29,6 +29,18 @@ vlan 100
 vlan 500
    name SVLAN_COLLECTE_L2
 !
+vlan 2000
+   name OUT-FORTI
+!
+vlan 2001
+   name IN-FORTI
+!
+vlan 2002
+   name MPLS-FORTI
+!
+vlan 3999
+   name INTERCO-PROXMOX-HOME
+!
 vlan 4090
    name vlan-peer-link
    trunk group MLAG
@@ -42,7 +54,7 @@ vrf instance mgmt
 interface Port-Channel10
    description PO_OUT_LNS2
    mtu 9214
-   switchport trunk allowed vlan 10-11
+   switchport trunk allowed vlan 10-11,3999
    switchport mode trunk
    mlag 10
 !
@@ -139,6 +151,10 @@ interface Vxlan1
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
    vxlan vlan 500 vni 100500
+   vxlan vlan 2000 vni 102000
+   vxlan vlan 2001 vni 102001
+   vxlan vlan 2002 vni 102002
+   vxlan vlan 3999 vni 103999
 !
 ip routing
 ip routing vrf mgmt
@@ -196,6 +212,26 @@ router bgp 65002
    vlan 500
       rd 65002:100500
       route-target both 500:100500
+      redistribute learned
+   !
+   vlan 2000
+      rd 65002:102000
+      route-target both 2000:102000
+      redistribute learned
+   !
+   vlan 2001
+      rd 65002:102001
+      route-target both 2001:102001
+      redistribute learned
+   !
+   vlan 2002
+      rd 65002:102002
+      route-target both 2002:102002
+      redistribute learned
+   !
+   vlan 3999
+      rd 65002:103999
+      route-target both 3999:103999
       redistribute learned
    !
    address-family evpn

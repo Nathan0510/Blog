@@ -1,4 +1,4 @@
- ! device: Leaf2-B1 (vEOS-lab, EOS-4.31.0F)
+! device: Leaf2-B1 (vEOS-lab, EOS-4.31.0F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -9,6 +9,8 @@ transceiver qsfp default-mode 4x10G
 service routing protocols model multi-agent
 !
 hostname Leaf2-B1
+!
+snmp-server community naruto-public ro
 !
 spanning-tree mode mstp
 no spanning-tree vlan-id 1-4094
@@ -25,6 +27,18 @@ vlan 11
 !
 vlan 500
    name SVLAN_COLLECTE_L2
+!
+vlan 2000
+   name OUT-FORTI
+!
+vlan 2001
+   name IN-FORTI
+!
+vlan 2002
+   name MPLS-FORTI
+!
+vlan 3999
+   name VLAN-PROXMOX-HOME
 !
 vlan 4090
    name vlan-peer-link
@@ -45,7 +59,7 @@ interface Port-Channel10
 !
 interface Port-Channel20
    description PO_IN_LNS1
-   switchport trunk allowed vlan 500
+   switchport trunk allowed vlan 500,2000-2002
    switchport mode trunk
    mlag 20
 !
@@ -88,6 +102,7 @@ interface Ethernet7
 interface Ethernet8
 !
 interface Ethernet9
+   switchport access vlan 3999
 !
 interface Ethernet10
    description PEER-LINK LEAF1 - et10
@@ -96,6 +111,31 @@ interface Ethernet10
 interface Ethernet11
    description PEER-LINK LEAF1 - et11
    channel-group 100 mode active
+!
+interface Ethernet12
+!
+interface Ethernet13
+!
+interface Ethernet14
+!
+interface Ethernet15
+!
+interface Ethernet16
+!
+interface Ethernet17
+   description OUT-FORTI
+   switchport access vlan 2000
+   switchport mode dot1q-tunnel
+!
+interface Ethernet18
+   description IN-FORTI
+   switchport access vlan 2001
+   switchport mode dot1q-tunnel
+!
+interface Ethernet19
+   description MPLS-FORTI
+   switchport access vlan 2002
+   switchport mode dot1q-tunnel
 !
 interface Loopback1
    description EVPN | Control Plane
@@ -109,6 +149,10 @@ interface Management1
    description KEEP-ALIVE MLAG
    vrf mgmt
    ip address 10.0.2.1/31
+!
+interface Vlan3999
+   description MGMT
+   ip address 100.100.100.2/24
 !
 interface Vlan4090
    no autostate
@@ -124,7 +168,12 @@ interface Vxlan1
    vxlan encapsulation ipv6
    vxlan vlan 10 vni 100010
    vxlan vlan 11 vni 100011
+   vxlan vlan 100 vni 10100
    vxlan vlan 500 vni 100500
+   vxlan vlan 2000 vni 102000
+   vxlan vlan 2001 vni 102001
+   vxlan vlan 2002 vni 102002
+   vxlan vlan 3999 vni 103999
 !
 ip routing
 ip routing vrf mgmt
@@ -142,6 +191,8 @@ mlag configuration
    peer-address heartbeat 10.0.2.0 vrf mgmt
    peer-link Port-Channel100
    dual-primary detection delay 10 action errdisable all-interfaces
+!
+ip route 100.100.101.0/24 Vlan3999 100.100.100.1
 !
 route-map RM_UNDERLAY_LO permit 10
    match ipv6 address prefix-list PL_UNDERLAY_LO
@@ -182,6 +233,26 @@ router bgp 65001
    vlan 500
       rd 65001:100500
       route-target both 500:100500
+      redistribute learned
+   !
+   vlan 2000
+      rd 65001:102000
+      route-target both 2000:102000
+      redistribute learned
+   !
+   vlan 2001
+      rd 65001:102001
+      route-target both 2001:102001
+      redistribute learned
+   !
+   vlan 2002
+      rd 65001:102002
+      route-target both 2002:102002
+      redistribute learned
+   !
+   vlan 3999
+      rd 65001:103999
+      route-target both 3999:103999
       redistribute learned
    !
    address-family evpn

@@ -5,7 +5,7 @@ platform qfp utilization monitor load 80
 no platform punt-keepalive disable-kernel-core
 platform console serial
 !
-hostname LNS1
+hostname LNS2
 !
 boot-start-marker
 boot-end-marker
@@ -27,11 +27,7 @@ vrf definition VOIP
   route-target export 64555:64555
   route-target import 64555:64555
  exit-address-family
- !
- address-family ipv6
- exit-address-family
 !
-enable password nathan
 !
 aaa new-model
 !
@@ -48,7 +44,6 @@ aaa accounting network default start-stop group radius-naruto
 !
 !
 aaa session-id common
-port-channel mc-lag
 !
 !
 !
@@ -57,7 +52,6 @@ port-channel mc-lag
 !
 !
 no ip domain lookup
-ip domain name naruto.ninja
 !
 !
 !
@@ -95,7 +89,7 @@ multilink bundle-name authenticated
 !
 !
 !
-license udi pid CSR1000V sn 9ICV79PF1PK
+license udi pid CSR1000V sn 9DVB3KL0GR4
 no license smart enable
 diagnostic bootup level minimal
 !
@@ -106,28 +100,6 @@ spanning-tree extend system-id
 !
 redundancy
 !
-crypto ikev2 proposal IKEv2_PROPOSAL
- encryption aes-cbc-256
- integrity sha256
- group 20
-!
-crypto ikev2 policy IKEv2_POLICY
- proposal IKEv2_PROPOSAL
-!
-crypto ikev2 keyring IKEv2_KEYRING
- peer HUB_PEER
-  address 0.0.0.0 0.0.0.0
-  pre-shared-key local TEST
-  pre-shared-key remote TEST
- !
-!
-!
-crypto ikev2 profile IKEv2_PROFILE
- match identity remote address 0.0.0.0
- authentication remote pre-share
- authentication local pre-share
- keyring local IKEv2_KEYRING
- lifetime 3600
 !
 !
 !
@@ -140,12 +112,6 @@ crypto ikev2 profile IKEv2_PROFILE
 !
 !
 !
-crypto ipsec transform-set PROFILE-TRANSFORM esp-aes 256 esp-sha256-hmac
- mode tunnel
-!
-crypto ipsec profile IPSEC_PROFILE
- set transform-set PROFILE-TRANSFORM
- set ikev2-profile IKEv2_PROFILE
 !
 !
 !
@@ -161,20 +127,20 @@ bba-group pppoe global
 !
 interface Loopback1
  description LO_MPLS
- ip address 100.127.0.1 255.255.255.255
+ ip address 100.127.0.2 255.255.255.255
  ip router isis
- ipv6 address 2001:DEAD:C0CA:C01A::1/128
+ ipv6 address 2001:DEAD:C0CA:C01A::2/128
  ipv6 router isis
 !
 interface Loopback55
- ip address 109.205.66.127 255.255.255.255
+ ip address 109.205.66.128 255.255.255.255
 !
 interface Loopback65000
  vrf forwarding Customer1
  ip address 100.110.1.1 255.255.255.255
 !
 interface Port-channel10
- description PO_OUT_LEAF_B1
+ mtu 2000
  no ip address
  no negotiation auto
  no mop enabled
@@ -183,9 +149,9 @@ interface Port-channel10
 interface Port-channel10.10
  description L2-LNS-ISIS
  encapsulation dot1Q 10
- ip address 100.64.0.1 255.255.255.248
+ ip address 100.64.0.2 255.255.255.248
  ip router isis
- ipv6 address 2001:DEAD:CAFE:BABE::1/125
+ ipv6 address 2001:DEAD:CAFE:BABE::2/125
  ipv6 enable
  ipv6 router isis
  mpls ip
@@ -193,28 +159,16 @@ interface Port-channel10.10
 interface Port-channel10.11
  description L2-LNS-BR-LNS
  encapsulation dot1Q 11
- ip address 100.65.0.1 255.255.255.248
- ipv6 address 2001:DEAD:CAFE:BEEF::1/125
+ ip address 100.65.0.2 255.255.255.248
+ ipv6 address 2001:DEAD:CAFE:BEEF::2/125
  ipv6 enable
 !
 interface Port-channel10.3999
  description *** INTERCO PROXMOX ***
  encapsulation dot1Q 3999
- ip address 100.100.100.10 255.255.255.0
-!
-interface Tunnel1
- vrf forwarding VOIP
- ip address 169.254.0.1 255.255.0.0
- no ip redirects
- ip nhrp authentication NATHAN
- ip nhrp network-id 1
- tunnel source Loopback55
- tunnel mode gre multipoint
- tunnel key 510
- tunnel protection ipsec profile IPSEC_PROFILE
+ ip address 100.100.100.11 255.255.255.0
 !
 interface GigabitEthernet1
- description IN_LEAF
  mtu 9214
  no ip address
  negotiation auto
@@ -222,23 +176,10 @@ interface GigabitEthernet1
  no mop sysid
 !
 interface GigabitEthernet1.500
- description COLLECTE_COVAGE_L2
  encapsulation dot1Q 500 second-dot1q any
  pppoe enable group global
 !
-interface GigabitEthernet1.20000100
- description OUT-FORTI
- encapsulation dot1Q 2000 second-dot1q 100
- ip address 172.30.254.1 255.255.255.248
-!
-interface GigabitEthernet1.20020100
- description MPLS-FORTI
- encapsulation dot1Q 2002 second-dot1q 100
- vrf forwarding Customer1
- ip address 172.31.254.1 255.255.255.248
-!
 interface GigabitEthernet2
- mtu 9214
  no ip address
  shutdown
  negotiation auto
@@ -281,7 +222,6 @@ interface GigabitEthernet7
  no mop sysid
 !
 interface GigabitEthernet8
- description OUT_LEAF1
  mtu 2000
  no ip address
  negotiation auto
@@ -290,7 +230,6 @@ interface GigabitEthernet8
  channel-group 10 mode active
 !
 interface GigabitEthernet9
- description OUT_LEAF2
  mtu 2000
  no ip address
  negotiation auto
@@ -300,12 +239,12 @@ interface GigabitEthernet9
 !
 interface Virtual-Template1
  mtu 1492
- ip unnumbered Loopback1
+ ip unnumbered Loopback55
  no peer default ip address
- ppp authentication chap callin
+ ppp authentication chap
 !
 router isis
- net 49.0001.1001.2700.0000.00
+ net 49.0001.1001.2700.0100.00
  is-type level-2-only
  metric-style narrow
  log-adjacency-changes
@@ -322,53 +261,38 @@ router bgp 64555
  neighbor LNS_V6 peer-group
  neighbor LNS_V6 remote-as 64555
  neighbor LNS_V6 update-source Loopback1
- neighbor 2001:DEAD:C0CA:C01A::2 peer-group LNS_V6
+ neighbor 2001:DEAD:C0CA:C01A::1 peer-group LNS_V6
  neighbor 2001:DEAD:CAFE:BEEF::6 remote-as 57752
  neighbor 100.65.0.6 remote-as 57752
- neighbor 100.127.0.2 peer-group LNS_V4
- neighbor 172.30.254.6 remote-as 64086.59904
- neighbor 172.30.254.6 description OUT-FORTI
+ neighbor 100.127.0.1 peer-group LNS_V4
  !
  address-family ipv4
   bgp suppress-inactive
   redistribute connected
   redistribute static
   neighbor LNS_V4 next-hop-self
-  no neighbor 2001:DEAD:C0CA:C01A::2 activate
+  no neighbor 2001:DEAD:C0CA:C01A::1 activate
   no neighbor 2001:DEAD:CAFE:BEEF::6 activate
   neighbor 100.65.0.6 activate
-  neighbor 100.127.0.2 activate
-  neighbor 172.30.254.6 activate
-  neighbor 172.30.254.6 default-originate
-  neighbor 172.30.254.6 route-map RM_CUSTOMER_PUB in
-  neighbor 172.30.254.6 route-map RM_DEFAULT_ROUTE out
+  neighbor 100.127.0.1 activate
  exit-address-family
  !
  address-family vpnv4
   neighbor LNS_V4 send-community both
-  neighbor 100.127.0.2 activate
+  neighbor 100.127.0.1 activate
  exit-address-family
  !
  address-family ipv6
   redistribute connected
-  neighbor 2001:DEAD:C0CA:C01A::2 activate
-  neighbor 2001:DEAD:C0CA:C01A::2 soft-reconfiguration inbound
+  neighbor LNS_V6 next-hop-self
+  neighbor 2001:DEAD:C0CA:C01A::1 activate
+  neighbor 2001:DEAD:C0CA:C01A::1 soft-reconfiguration inbound
   neighbor 2001:DEAD:CAFE:BEEF::6 activate
  exit-address-family
  !
  address-family vpnv6
   neighbor LNS_V6 send-community both
-  neighbor 2001:DEAD:C0CA:C01A::2 activate
- exit-address-family
- !
- address-family ipv4 vrf Customer1
-  redistribute connected
-  redistribute static
-  neighbor 172.31.254.6 remote-as 64086.59904
-  neighbor 172.31.254.6 description MPLS-FORTI
-  neighbor 172.31.254.6 activate
-  neighbor 172.31.254.6 soft-reconfiguration inbound
-  neighbor 172.31.254.6 route-map RM_DEFAULT_ROUTE in
+  neighbor 2001:DEAD:C0CA:C01A::1 activate
  exit-address-family
  !
  address-family ipv4 vrf VOIP
@@ -382,25 +306,14 @@ no ip http server
 no ip http secure-server
 ip route 100.100.101.0 255.255.255.0 Port-channel10.3999 100.100.100.1
 !
-ip ssh server algorithm mac hmac-sha2-512
-ip ssh server algorithm encryption aes256-ctr aes192-ctr aes128-ctr
 !
-!
-ip prefix-list PL_CUSTOMER_PUB seq 5 permit 109.205.64.2/32
-!
-ip prefix-list PL_DEFAULT_ROUTE seq 5 permit 0.0.0.0/0
 !
 ip prefix-list PL_VOIP_CUSTOMER seq 5 permit 172.16.0.0/16 ge 24 le 24
+ipv6 local pool PPPOE_V6 2001:ABCD::/60 64
 !
-!
-route-map RM_DEFAULT_ROUTE permit 10
- match ip address prefix-list PL_DEFAULT_ROUTE
 !
 route-map RM_VOIP_CUSTOMER permit 10
  match ip address prefix-list PL_VOIP_CUSTOMER
-!
-route-map RM_CUSTOMER_PUB permit 10
- match ip address prefix-list PL_CUSTOMER_PUB
 !
 !
 !
@@ -420,8 +333,6 @@ control-plane
 line con 0
  stopbits 1
 line vty 0 4
- transport input ssh
-line vty 5 15
 !
 wsma agent exec
 !

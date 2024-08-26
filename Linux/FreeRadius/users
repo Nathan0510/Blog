@@ -4,8 +4,9 @@ nathan@naruto.ninja Cleartext-Password := "nathan"
     Framed-MTU := 1492,
     Framed-IP-Address := 100.125.0.0,
     Framed-IP-Netmask := 255.255.255.255,
-    Framed-Route := "109.205.64.1/32 100.125.0.0"
-
+    Framed-Route := "10.1.2.0/24 100.125.0.0",
+    Cisco-Avpair := "ip:vrf-id=Customer1",
+    Cisco-Avpair := "ip:ip-unnumbered=Loopback65000"
 
 sasuke@naruto.ninja Cleartext-Password := "sasuke"
     Service-Type := Framed-User,
@@ -13,4 +14,6 @@ sasuke@naruto.ninja Cleartext-Password := "sasuke"
     Framed-MTU := 1492,
     Framed-IP-Address := 100.125.0.1,
     Framed-IP-Netmask := 255.255.255.255,
-    Framed-Route := "109.205.64.1/32 100.125.0.1 201"
+    Framed-Route := "10.1.1.0/24 100.125.0.1",
+    Cisco-Avpair := "ip:vrf-id=Customer1",
+    Cisco-Avpair := "ip:ip-unnumbered=Loopback65000"

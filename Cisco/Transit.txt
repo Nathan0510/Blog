@@ -91,6 +91,9 @@ redundancy
 interface Loopback1
  ip address 1.1.1.1 255.255.255.255
 !
+interface Loopback2
+ ip address 8.8.8.8 255.255.255.255
+!
 interface GigabitEthernet1
  mtu 2000
  ip address 140.150.160.2 255.255.255.252

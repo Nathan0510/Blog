@@ -1,0 +1,97 @@
+! device: PE1 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname PE1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+vrf instance NARUTO
+   rd 65000:65000
+!
+interface Ethernet1
+!
+interface Ethernet2
+   description P1
+   mtu 1500
+   no switchport
+   ip address 100.64.0.0/31
+   isis enable BACKBONE
+   isis network point-to-point
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+   no switchport
+!
+interface Ethernet7.1000
+   encapsulation dot1q vlan 1000
+   vrf NARUTO
+   ip address 192.168.100.1/24
+!
+interface Ethernet7.2000
+   encapsulation dot1q vlan 2000
+   vrf NARUTO
+   ip address 192.168.200.1/24
+!
+interface Ethernet8
+!
+interface Loopback1
+   ip address 100.127.0.0/32
+   isis enable BACKBONE
+!
+interface Management1
+!
+interface Vxlan1
+   vxlan source-interface Loopback1
+   vxlan udp-port 4789
+   vxlan vrf NARUTO vni 2000
+!
+ip routing
+ip routing vrf NARUTO
+!
+ipv6 unicast-routing
+!
+router bgp 65000
+   timers bgp 15 30
+   neighbor 100.127.0.3 remote-as 65000
+   neighbor 100.127.0.3 update-source Loopback1
+   neighbor 100.127.0.3 description PE2
+   neighbor 100.127.0.3 send-community extended
+   !
+   address-family evpn
+      neighbor 100.127.0.3 activate
+   !
+   address-family ipv4
+      no neighbor 100.127.0.3 activate
+   !
+   vrf NARUTO
+      rd 65000:65000
+      route-target import evpn 65000:65000
+      route-target export evpn 65000:65000
+      redistribute connected
+!
+router isis BACKBONE
+   net 49.0001.2700.0000.0000.00
+   is-type level-2
+   log-adjacency-changes
+   !
+   address-family ipv4 unicast
+!
+end

@@ -27,7 +27,6 @@ interface Ethernet2
    mtu 1500
    no switchport
    ipv6 address 2001:cafe::/127
-   ipv6 nd ra disabled
    isis enable BACKBONE
    isis network point-to-point
 !
@@ -64,7 +63,6 @@ interface Loopback0
 !
 interface Loopback1
    ipv6 address 2001::/128
-   ipv6 nd ra disabled
    node-segment ipv6 index 0
    isis enable BACKBONE
    isis passive
@@ -110,6 +108,9 @@ router bgp 65000
    address-family ipv6
       neighbor 2001::5 activate
       redistribute connected
+   !
+   address-family vpn-ipv4
+      neighbor 2001::5 activate
    !
    address-family vpn-ipv6
       neighbor 2001::5 activate

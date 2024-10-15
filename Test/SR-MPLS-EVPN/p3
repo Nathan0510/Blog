@@ -1,0 +1,72 @@
+! device: P3 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname P3
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   mtu 1500
+   no switchport
+   ipv6 address 2001:cafe:6::1/127
+   isis enable BACKBONE
+   isis network point-to-point
+!
+interface Ethernet2
+!
+interface Ethernet3
+   description P1
+   mtu 1500
+   no switchport
+   ipv6 address 2001:cafe:4::/127
+   isis enable BACKBONE
+   isis network point-to-point
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Loopback1
+   ipv6 address 2001::3/128
+   node-segment ipv6 index 3
+   isis enable BACKBONE
+   isis passive
+!
+interface Management1
+!
+ip routing
+!
+ipv6 unicast-routing
+!
+mpls ip
+!
+router isis BACKBONE
+   net 49.0001.2700.0000.0005.00
+   is-type level-2
+   log-adjacency-changes
+   advertise passive-only
+   !
+   address-family ipv6 unicast
+   !
+   segment-routing mpls
+      router-id 100.127.0.5
+      no shutdown
+!
+end

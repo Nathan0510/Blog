@@ -21,7 +21,6 @@ interface Ethernet1
    mtu 1500
    no switchport
    ipv6 address 2001:cafe:1::1/127
-   ipv6 nd ra disabled
    isis enable BACKBONE
    isis network point-to-point
 !
@@ -30,7 +29,6 @@ interface Ethernet2
    mtu 1500
    no switchport
    ipv6 address 2001:cafe::1/127
-   ipv6 nd ra disabled
    isis enable BACKBONE
    isis network point-to-point
 !
@@ -39,7 +37,6 @@ interface Ethernet3
    mtu 1500
    no switchport
    ipv6 address 2001:cafe:4::1/127
-   ipv6 nd ra disabled
    isis enable BACKBONE
    isis network point-to-point
 !
@@ -55,7 +52,6 @@ interface Ethernet8
 !
 interface Loopback1
    ipv6 address 2001::1/128
-   ipv6 nd ra disabled
    node-segment ipv6 index 1
    isis enable BACKBONE
    isis passive

@@ -1,0 +1,137 @@
+! device: PE1 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname PE1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+vrf instance NARUTO
+!
+vrf instance SASUKE
+!
+interface Ethernet1
+!
+interface Ethernet2
+   description P1
+   mtu 1500
+   no switchport
+   ipv6 address 2001:cafe::/127
+   ipv6 nd ra disabled
+   isis enable BACKBONE
+   isis network point-to-point
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+   no switchport
+!
+interface Ethernet7.1000
+   encapsulation dot1q vlan 1000
+   vrf NARUTO
+   ip address 192.168.100.1/24
+   ipv6 address 2001:dead::/64
+!
+interface Ethernet7.2000
+   encapsulation dot1q vlan 2000
+   vrf NARUTO
+   ip address 192.168.200.1/24
+!
+interface Ethernet7.3000
+   encapsulation dot1q vlan 3000
+   vrf SASUKE
+   ip address 192.168.1.1/24
+!
+interface Ethernet8
+!
+interface Loopback0
+!
+interface Loopback1
+   ipv6 address 2001::/128
+   ipv6 nd ra disabled
+   node-segment ipv6 index 0
+   isis enable BACKBONE
+   isis passive
+!
+interface Loopback5
+   ip address 109.205.66.127/32
+!
+interface Loopback10
+   vrf NARUTO
+   ip address 100.100.100.0/32
+   ipv6 address 2001:cafe::/128
+!
+interface Loopback55
+   ipv6 address 2001:dead:cafe:c0ca::1/128
+!
+interface Management1
+!
+ip routing
+ip routing vrf NARUTO
+ip routing vrf SASUKE
+!
+ipv6 unicast-routing
+ipv6 unicast-routing vrf NARUTO
+ipv6 unicast-routing vrf SASUKE
+!
+mpls ip
+!
+router bgp 65000
+   router-id 100.127.0.0
+   no bgp default ipv4-unicast
+   bgp default ipv6-unicast
+   neighbor 2001::5 remote-as 65000
+   neighbor 2001::5 next-hop-self
+   neighbor 2001::5 update-source Loopback1
+   neighbor 2001::5 description PE1-IPv6
+   neighbor 2001::5 send-community standard extended
+   !
+   address-family ipv4
+      neighbor 2001::5 activate
+      neighbor 2001::5 next-hop address-family ipv6 originate
+      redistribute connected
+   !
+   address-family ipv6
+      neighbor 2001::5 activate
+      redistribute connected
+   !
+   address-family vpn-ipv6
+      neighbor 2001::5 activate
+   !
+   vrf NARUTO
+      rd 65000:65000
+      route-target import vpn-ipv4 65000:65000
+      route-target import vpn-ipv6 65000:65000
+      route-target export vpn-ipv4 65000:65000
+      route-target export vpn-ipv6 65000:65000
+      redistribute connected
+!
+router isis BACKBONE
+   net 49.0001.2700.0000.0000.00
+   is-type level-2
+   log-adjacency-changes
+   advertise passive-only
+   !
+   address-family ipv6 unicast
+   !
+   segment-routing mpls
+      router-id 100.127.0.0
+      no shutdown
+!
+end

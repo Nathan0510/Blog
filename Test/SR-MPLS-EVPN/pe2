@@ -1,0 +1,130 @@
+! device: PE2 (vEOS-lab, EOS-4.31.0F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname PE2
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+vlan 3000
+   name L2VPN
+!
+vrf instance NARUTO
+!
+vrf instance SASUKE
+!
+interface Ethernet1
+!
+interface Ethernet2
+   description P4
+   mtu 1500
+   no switchport
+   ipv6 address 2001:cafe:3::/127
+   isis enable BACKBONE
+   isis network point-to-point
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+   no switchport
+   encapsulation dot1q vlan 3000
+   vrf SASUKE
+   ip address 192.168.2.1/24
+!
+interface Ethernet7
+   no switchport
+   vrf NARUTO
+   ip address 192.168.2.1/24
+   ipv6 address 2001:dead:1::/64
+!
+interface Ethernet8
+   switchport access vlan 3000
+!
+interface Loopback1
+   ipv6 address 2001::5/128
+   node-segment ipv6 index 5
+   isis enable BACKBONE
+   isis passive
+!
+interface Loopback5
+   ip address 109.205.66.128/32
+!
+interface Loopback10
+   vrf NARUTO
+   ip address 100.100.100.1/32
+   ipv6 address 2001:cafe::1/128
+!
+interface Loopback55
+   ipv6 address 2001:dead:cafe:c0ca::2/128
+!
+interface Loopback1000
+   ipv6 address 2001:c0ca:c01a::1/128
+!
+interface Management1
+!
+ip routing
+ip routing vrf NARUTO
+ip routing vrf SASUKE
+!
+ipv6 unicast-routing
+ipv6 unicast-routing vrf NARUTO
+ipv6 unicast-routing vrf SASUKE
+!
+mpls ip
+!
+router bgp 65000
+   router-id 100.127.0.3
+   no bgp default ipv4-unicast
+   bgp default ipv6-unicast
+   neighbor 2001:: remote-as 65000
+   neighbor 2001:: next-hop-self
+   neighbor 2001:: update-source Loopback1
+   neighbor 2001:: description PE1-IPv6
+   neighbor 2001:: send-community standard extended
+   !
+   vlan 3000
+      rd 3000:3000
+      route-target both 3000:3000
+      redistribute learned
+   !
+   address-family evpn
+      neighbor 2001:: activate
+      neighbor 2001:: encapsulation mpls next-hop-self source-interface Loopback1
+   !
+   vrf NARUTO
+      rd 65000:65000
+      route-target import evpn 65000:65000
+      route-target import vpn-ipv4 65000:65000
+      route-target import vpn-ipv6 65000:65000
+      route-target export evpn 65000:65000
+      route-target export vpn-ipv4 65000:65000
+      route-target export vpn-ipv6 65000:65000
+      redistribute connected
+!
+router isis BACKBONE
+   net 49.0001.2700.0000.0003.00
+   is-type level-2
+   log-adjacency-changes
+   advertise passive-only
+   !
+   address-family ipv6 unicast
+   !
+   segment-routing mpls
+      router-id 100.127.0.3
+      no shutdown
+!
+end

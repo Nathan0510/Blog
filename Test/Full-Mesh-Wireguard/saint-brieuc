@@ -1,0 +1,38 @@
+[admin@Saint-Brieuc] > export
+# 2025-03-04 21:36:33 by RouterOS 7.18.1
+# system id = 1VibvZwubyH
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+/interface wireguard
+add listen-port=12345 mtu=1420 name=wg
+/port
+set 0 name=serial0
+/routing ospf instance
+add disabled=no name=full-mesh router-id=100.126.0.2
+/routing ospf area
+add disabled=no instance=full-mesh name=area-wg
+/interface wireguard peers
+add allowed-address=100.126.0.3/32,192.168.3.0/24 endpoint-address=\
+    100.127.0.3 endpoint-port=12345 interface=wg name=To_Cherbourg \
+    public-key="9XO9LK2WU/dfs0VlIEUWfEBOssax59LlovboFUQxAwA="
+add allowed-address=100.126.0.1/32,192.168.1.0/24 endpoint-address=\
+    100.127.0.1 endpoint-port=12345 interface=wg name=To_Caen public-key=\
+    "lfsrTdiO7i95UaqlrbV1yPhQh6RQYMDOWmj+OAGZljw="
+/ip address
+add address=100.127.0.2/24 interface=ether1 network=100.127.0.0
+add address=192.168.2.1/24 interface=ether2 network=192.168.2.0
+add address=100.126.0.2/24 interface=wg network=100.126.0.0
+/routing ospf interface-template
+add area=area-wg disabled=no networks=192.168.2.0/24
+add area=area-wg disabled=no interfaces=wg type=nbma
+/routing ospf static-neighbor
+add address=100.126.0.1%wg area=area-wg disabled=no
+add address=100.126.0.3%wg area=area-wg disabled=no
+/system identity
+set name=Saint-Brieuc
+/system note
+set show-at-login=no

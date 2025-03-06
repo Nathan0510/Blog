@@ -1,0 +1,58 @@
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+/interface wireguard
+add listen-port=12345 mtu=1420 name=wg
+/port
+set 0 name=serial0
+/routing ospf instance
+add disabled=no name=Hub&Spoke originate-default=if-installed router-id=\
+    100.126.0.254
+/routing ospf area
+add disabled=no instance=Hub&Spoke name=area-wg
+/interface wireguard peers
+add allowed-address=100.126.0.3/32,192.168.3.0/24 endpoint-address=\
+    100.127.3.1 endpoint-port=12345 interface=wg name=To_Cherbourg \
+    public-key="06KDt9Fn+PZeKCHjQ/6tX+q4sUlLlQq+BPkgCRd+mD0="
+add allowed-address=100.126.0.1/32,192.168.1.0/24 endpoint-address=\
+    100.127.1.1 endpoint-port=12345 interface=wg name=To_Caen public-key=\
+    "Heyq3ufeU7/AIPHADrRVGYO444sD92YN/KDg7VvYFmU="
+add allowed-address=100.126.0.2/32,192.168.2.0/24 endpoint-address=\
+    100.127.2.1 endpoint-port=12345 interface=wg name=To_St-brieuc \
+    public-key="XCBDlmLxt5kEZ9NcEufjf9P8T0Vr8APE7AkAS05K0So="
+/ip address
+add address=100.127.4.1/31 interface=ether1 network=100.127.4.0
+add address=100.100.100.1/24 interface=ether2 network=100.100.100.0
+add address=100.126.0.254/24 interface=wg network=100.126.0.0
+add address=109.205.66.1/30 comment=To_Internet interface=ether4 network=\
+    109.205.66.0
+/ip dhcp-client
+add interface=ether1
+/ip firewall address-list
+add address=192.168.1.0/24 comment=LAN-CAEN list=LAN
+add address=192.168.2.0/24 comment=LAN-ST_BRIEUC list=LAN
+add address=192.168.3.0/24 comment=LAN-CHERBOURG list=LAN
+add address=100.100.100.0/24 comment=LAn-HOSTING list=LAN
+add address=192.168.1.0/24 comment=LAN-CAEN list=LAN-CAEN
+add address=192.168.2.0/24 comment=LAN-ST_BRIEUC list=LAN-ST_BRIEUC
+/ip firewall filter
+add action=drop chain=forward dst-address-list=LAN-ST_BRIEUC \
+    src-address-list=LAN-CAEN
+/ip firewall nat
+add action=masquerade chain=srcnat out-interface=ether4 src-address-list=LAN
+/ip route
+add dst-address=100.127.0.0/16 gateway=100.127.4.0
+add disabled=no gateway=109.205.66.2
+/routing ospf interface-template
+add area=area-wg disabled=no interfaces=wg type=nbma
+add area=area-wg disabled=no networks=100.100.100.0/24
+/routing ospf static-neighbor
+add address=100.126.0.1%wg area=area-wg disabled=no
+add address=100.126.0.2%wg area=area-wg disabled=no
+add address=100.126.0.3%wg area=area-wg disabled=no
+/system identity
+set name=Hub
+/system note
+set show-at-login=no

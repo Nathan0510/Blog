@@ -11,12 +11,9 @@ set [ find default-name=ether6 ] disable-running-check=no
 set [ find default-name=ether7 ] disable-running-check=no
 set [ find default-name=ether8 ] disable-running-check=no
 /interface vxlan
-add bridge=bridge bridge-pvid=30 dont-fragment=disabled learning=no local-address=2001:100:127::11 mac-address=06:EA:D8:8E:8A:CA name=vxlan3 \
-    vni=1030 vteps-ip-version=ipv6
 add bridge=bridge bridge-pvid=100 dont-fragment=disabled learning=no local-address=2001:100:127::11 mac-address=EE:BB:FB:D6:D3:4D name=\
     vxlan100 vni=1100 vteps-ip-version=ipv6
 /interface vlan
-add interface=bridge name=vlan30 vlan-id=30
 add interface=bridge name=vlan100 vlan-id=100
 /port
 set 0 name=serial0
@@ -35,8 +32,6 @@ add bridge=bridge tagged=ether7 vlan-ids=30,100
 add bridge=Collecte_L2 tagged=ether6 untagged=ether8 vlan-ids=500
 /ip address
 add address=192.168.1.11/24 interface=vlan30 network=192.168.1.0
-/ip dhcp-client
-add interface=ether1
 /ipv6 address
 add address=2001:100:127::11/128 advertise=no interface=lo
 /routing bfd configuration
@@ -45,7 +40,6 @@ add interfaces=ether1,ether2
 add afi=evpn instance=Fabric local.address=2001:100:127::11 .role=ebgp multihop=yes name=Overlay_Spine1 remote.address=2001:100:127::1
 add afi=evpn instance=Fabric local.address=2001:100:127::11 .role=ebgp multihop=yes name=Overlay_Spine2 remote.address=2001:100:127::2
 /routing bgp evpn
-add disabled=no export.route-targets=1030:1030 import.route-targets=1030:1030 instance=Fabric name=VLAN30 vni=1030
 add disabled=no export.route-targets=1100:1100 import.route-targets=1100:1100 instance=Fabric name=VLAN100 vni=1100
 /routing ospf interface-template
 add area=Area_Underlay disabled=no interfaces=lo passive

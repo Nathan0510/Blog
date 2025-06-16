@@ -1,0 +1,32 @@
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+set [ find default-name=ether6 ] disable-running-check=no
+set [ find default-name=ether7 ] disable-running-check=no
+set [ find default-name=ether8 ] disable-running-check=no
+/port
+set 0 name=serial0
+/routing bgp instance
+add as=65000 disabled=no name=Fabric router-id=100.127.0.2
+/routing bgp template
+add afi=evpn multihop=yes name=TPL_Overlay nexthop-choice=propagate
+/routing ospf instance
+add disabled=no name=Instance_Underlay router-id=100.127.0.2 version=3
+/routing ospf area
+add disabled=no instance=Instance_Underlay name=Area_Underlay
+/ipv6 address
+add address=2001:100:127::2/128 advertise=no interface=lo
+/routing bfd configuration
+add interfaces=ether1,ether2,ether3,ether4
+/routing bgp connection
+add instance=Fabric local.address=2001:100:127::2 .role=ebgp name=\
+    Leafs_Overlay remote.address=2001:100:127::/64 templates=TPL_Overlay
+/routing ospf interface-template
+add area=Area_Underlay disabled=no interfaces=lo passive
+add area=Area_Underlay disabled=no interfaces=ether1,ether2,ether3,ether4 \
+    use-bfd=yes
+/system identity
+set name=Spine2

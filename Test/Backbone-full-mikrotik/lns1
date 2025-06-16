@@ -1,0 +1,49 @@
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+set [ find default-name=ether6 ] disable-running-check=no
+set [ find default-name=ether7 ] disable-running-check=no
+set [ find default-name=ether8 ] disable-running-check=no
+/interface vlan
+add interface=ether1 name=Interco_LNS2 vlan-id=100
+add interface=ether3 name=SVLAN use-service-tag=yes vlan-id=500
+/port
+set 0 name=serial0
+/ppp profile
+add change-tcp-mss=yes local-address=100.100.100.2 name=ppp-profile-default only-one=yes use-compression=no \
+    use-encryption=no use-ipv6=no use-mpls=no
+/routing bgp instance
+add as=64555 disabled=no name=BGP_BACKBONE
+/routing bgp template
+add hold-time=1m keepalive-time=30s name=TPL_BACKBONE nexthop-choice=force-self output.redistribute=connected,static
+/routing isis instance
+add afi=ip areas=49.0001 disabled=no name=ISIS_BACKONE system-id=1000.1000.1001
+/interface pppoe-server server
+add authentication=pap,chap default-profile=ppp-profile-default disabled=no interface=SVLAN pppoe-over-vlan-range=\
+    10-4090 service-name=Internet
+/ip address
+add address=100.100.100.2/24 interface=ether2 network=100.100.100.0
+add address=100.124.0.1 interface=lo network=100.124.0.1
+add address=100.125.0.1/30 interface=Interco_LNS2 network=100.125.0.0
+/ip route
+add dst-address=100.100.101.0/24 gateway=100.100.100.1
+/ppp aaa
+set interim-update=10m use-radius=yes
+/radius
+add address=100.100.101.1 secret=naruto service=ppp src-address=100.100.100.2 timeout=3s
+/radius incoming
+set accept=yes
+/routing bgp connection
+add instance=BGP_BACKBONE local.address=100.124.0.1 .role=ibgp name=LNS2 remote.address=100.124.0.2 templates=\
+    TPL_BACKBONE
+/routing isis interface-template
+add instance=ISIS_BACKONE interfaces=Interco_LNS2 levels=l2
+add instance=ISIS_BACKONE interfaces=lo levels=l2
+/system identity
+set name=PE-LNS1
+/system logging
+add topics=radius
+add topics=ppp,debug

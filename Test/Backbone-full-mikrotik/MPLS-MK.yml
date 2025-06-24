@@ -1,0 +1,44 @@
+- name: Déployer MPLS client sur LNS Mikrotik
+  hosts: mikrotik
+  gather_facts: false
+
+  tasks:
+  - name: Créer loopback
+    community.network.routeros_command:
+      commands:
+        - "/interface/bridge/add name=Lo_{{ Customer }}"
+
+  - name: Créer interface list
+    community.network.routeros_command:
+      commands:
+        - "/interface/list/add name=VRF-{{ Customer }}"
+
+  - name: Créer interface list member
+    community.network.routeros_command:
+      commands:
+        - "/interface/list/member/add interface=Lo_{{ Customer }} list=VRF-{{ Customer }}"
+
+  - name: Créer vrf
+    community.network.routeros_command:
+      commands:
+        - "/ip/vrf/add interfaces=VRF-{{ Customer }} name={{ Customer }}"
+
+  - name: Créer address
+    community.network.routeros_command:
+      commands:
+        - "/ip/address/add address={{ IPLoopback }}/32 interface=Lo_{{ Customer }}"
+
+  - name: Créer profile ppp
+    community.network.routeros_command:
+      commands:
+        - "/ppp/profile/add change-tcp-mss=yes interface-list=VRF-{{ Customer }} local-address={{ IPLoopback }} name=Profile-{{ Customer }} use-compression=no use-encryption=no use-mpls=no"
+
+  - name: Créer bgp listen range vrf
+    community.network.routeros_command:
+      commands:
+        - "/routing/bgp/connection/add instance=BGP_BACKBONE local.address={{ IPLoopback }} .role=ebgp name={{ Customer }} remote.address=100.64.0.0/16 templates=L3VPN-Customer vrf={{ Customer }}"
+
+  - name: Créer bgp l3vpn
+    community.network.routeros_command:
+      commands:
+        - "/routing/bgp/vpn/add export.redistribute=static,connected,bgp export.route-targets=64555:{{ AS }} import.route-targets=64555:{{ AS }} instance=BGP_BACKBONE label-allocation-policy=per-vrf name={{ Customer }} route-distinguisher=64555:{{ AS }} vrf={{ Customer }}"

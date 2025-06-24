@@ -1,3 +1,5 @@
+/interface bridge
+add name=Lo_Customer1
 /interface ethernet
 set [ find default-name=ether1 ] disable-running-check=no
 set [ find default-name=ether2 ] disable-running-check=no
@@ -9,21 +11,47 @@ set [ find default-name=ether7 ] disable-running-check=no
 set [ find default-name=ether8 ] disable-running-check=no
 /interface vlan
 add interface=ether1 name=Interco_LNS1 vlan-id=100
+/interface list
+add name=VRF-Customer1
+/ip vrf
+add interfaces=VRF-Customer1 name=Customer1
 /port
 set 0 name=serial0
 /routing bgp instance
 add as=64555 disabled=no name=BGP_BACKBONE
 /routing bgp template
-add hold-time=1m keepalive-time=30s name=TPL_BACKBONE nexthop-choice=force-self output.redistribute=connected,static
+add hold-time=1m keepalive-time=30s name=TPL_BACKBONE nexthop-choice=\
+    force-self output.redistribute=connected,static
+add hold-time=1m keepalive-time=30s name=L3VPN-Customer \
+    output.default-originate=always
 /routing isis instance
-add afi=ip areas=49.0001 disabled=no name=ISIS_BACKONE system-id=1000.1000.1002
+add afi=ip areas=49.0001 disabled=no name=ISIS_BACKONE system-id=\
+    1000.1000.1002
+/interface list member
+add interface=Lo_Customer1 list=VRF-Customer1
 /ip address
 add address=100.124.0.2 interface=lo network=100.124.0.2
 add address=100.125.0.2/30 interface=Interco_LNS1 network=100.125.0.0
+add address=100.101.0.1 interface=Lo_Customer1 network=100.101.0.1
+/mpls interface
+add interface=Interco_LNS1
+/mpls ldp
+add afi=ip lsr-id=100.124.0.2 transport-addresses=100.124.0.2 \
+    use-explicit-null=yes
+/mpls ldp interface
+add interface=Interco_LNS1
 /routing bgp connection
-add instance=BGP_BACKBONE local.address=100.124.0.2 .role=ibgp name=LNS2 remote.address=100.124.0.1 templates=TPL_BACKBONE
+add afi=ip,vpnv4 instance=BGP_BACKBONE local.address=100.124.0.2 .role=ibgp \
+    name=LNS1 remote.address=100.124.0.1 templates=TPL_BACKBONE
+add instance=BGP_BACKBONE local.address=100.101.0.1 .role=ebgp name=Customer1 \
+    remote.address=100.64.0.0/16 templates=L3VPN-Customer vrf=Customer1
+/routing bgp vpn
+add disabled=no export.redistribute=connected,static,bgp .route-targets=\
+    64560:64560 import.route-targets=64560:64560 instance=BGP_BACKBONE \
+    label-allocation-policy=per-vrf name=Customer1 route-distinguisher=\
+    64560:64560 vrf=Customer1
 /routing isis interface-template
 add instance=ISIS_BACKONE interfaces=Interco_LNS1 levels=l2
 add instance=ISIS_BACKONE interfaces=lo levels=l2
 /system identity
-set name=LNS2
+set name=PE-LNS2

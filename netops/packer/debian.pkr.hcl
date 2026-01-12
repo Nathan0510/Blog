@@ -73,7 +73,7 @@ build {
   provisioner "shell" {
     inline = [
       "sudo apt update",
-      "sudo apt -y upgrade",
+      "sudo apt upgrade -y",
       "sudo apt install curl vim nano micro tcpdump -y",
       "sudo cloud-init clean --logs",
       "sudo truncate -s 0 /etc/machine-id",

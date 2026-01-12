@@ -1,0 +1,8 @@
+proxmox_api_url          = "https://192.168.1.1"
+proxmox_node             = "pve1"
+proxmox_api_username     = "root@pam!packer"
+proxmox_api_token_secret = "ttttttttttttttttttt"
+ssh_username	           = "strongusername"
+ssh_password	           = "strongpassword"
+iso_file                 = "local:iso/debian-13.2.0-amd64-netinst.iso"
+disks_storage_pool       = "local"
